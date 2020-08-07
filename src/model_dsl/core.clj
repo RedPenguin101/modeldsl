@@ -1,4 +1,4 @@
-(ns modeldsl.core)
+(ns model-dsl.core)
 
 (def sum +)
 (def product *)
@@ -11,7 +11,7 @@
 (defn this [{new-period :new-period} key]
   (key new-period))
 
-(defn from-profile [{profile :profile} key]
+(defn profile-lookup [{profile :profile} key]
   (key profile))
 
 (defn profile-period-lookup [{profile :profile} key period]
@@ -20,7 +20,12 @@
                        value))
                    (key profile))) 0))
 
-(def put-ins #{'previous 'this 'from-profile 'profile-period-lookup})
+(defn if [options pred t-branch e-branch]
+  (if (interpret pred options)
+    (interpret t-branch options)
+    (interpret e-branch options)))
+
+(def put-ins #{'previous 'this 'profile-lookup 'profile-period-lookup 'if})
 
 (defn- interpret [function options]
   (if (coll? function)
