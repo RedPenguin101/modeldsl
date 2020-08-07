@@ -1,5 +1,6 @@
 (ns model-dsl.demo
-  (:require [model-dsl.core :refer :all]))
+  (:require [model-dsl.view :refer [view-scenario]]
+            [model-dsl.core :refer :all]))
 
 (def profile
   {:commitments          100000
@@ -19,11 +20,13 @@
                                   (dec (this :period-number))
                                   0))]
     [:pnl           (product (profile-lookup :return) (this :starting-aum))]
+    [:illiquid-share 0.5]
+    [:fas-pnl       (product (this :illiquid-share) (this :pnl))]
     [:special-fee   (if (zero? (mod (this :period-number) 4))
                       -100
                       0)]
     [:mgmt-fee      (product -1
-                             (this :commitments)
+                             (min (this :starting-aum) (this :commitments))
                              (profile-period-lookup
                                :mgmt-fee-profile
                                (this :period-number))) 0]
@@ -36,5 +39,6 @@
                          (this :contribution)
                          (this :pnl))]])
 
-(last (take 100 (iterate (partial next-period model profile) [])))
-
+(view-scenario
+  model
+  (last (take 10 (iterate (partial next-period model profile) []))))
