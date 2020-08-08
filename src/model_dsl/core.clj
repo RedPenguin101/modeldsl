@@ -1,4 +1,5 @@
-(ns model-dsl.core)
+(ns model-dsl.core
+  (:require [clojure.core :as c]))
 
 (def sum +)
 (def product *)
@@ -14,16 +15,15 @@
 (defn profile-lookup [{profile :profile} key]
   (key profile))
 
-(defn profile-period-lookup [{profile :profile} key period]
+(defn match-period [period-params period-number]
   (or (first (keep (fn [[start end value]]
-                     (when (some #{period} (range start (inc end)))
+                     (when (some #{period-number} (range start (inc end)))
                        value))
-                   (key profile))) 0))
+                   period-params))
+      0))
 
-(defn if [options pred t-branch e-branch]
-  (if (interpret pred options)
-    (interpret t-branch options)
-    (interpret e-branch options)))
+(defn profile-period-lookup [{profile :profile} key period]
+  (match-period (key profile) period))
 
 (def put-ins #{'previous 'this 'profile-lookup 'profile-period-lookup 'if})
 
@@ -36,7 +36,12 @@
         :else                  (apply (eval operator) (map #(interpret % options) operands))))
     function))
 
-(defn- do-row [[key function default] profile previous-periods new-period]
+(defn if [options pred t-branch e-branch]
+  (if (interpret pred options)
+    (interpret t-branch options)
+    (interpret e-branch options)))
+
+(defn- do-row [[key function {default :initial-value}] profile previous-periods new-period]
   {key (if (and default (empty? previous-periods))
          default
          (interpret function {:profile          profile
