@@ -15,10 +15,15 @@
     {:db       (assoc db :model new-model)
      :dispatch [:recalc-output]}))
 
+(defn valid-edn? [string]
+  (try (edn/read-string string)
+       (catch js/Object e false)))
+
 (defn recalc-output [model profile]
-  (try (str (run-model (edn/read-string model) (edn/read-string profile)
-                       10))
-       (catch js/Object e (.log js/console (str "not valid edn" e)))))
+  (if (and (valid-edn? model) (valid-edn? profile))
+    (str (run-model (edn/read-string model) (edn/read-string profile)
+                    10))
+    "Invalid EDN"))
 
 (reg-event-db
   :recalc-output
