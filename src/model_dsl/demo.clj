@@ -1,6 +1,9 @@
 (ns model-dsl.demo
   (:require [model-dsl.view :refer [view-scenario]]
-            [model-dsl.core :refer :all]))
+            [model-dsl.core :refer [increment sum product
+                                    this previous if
+                                    profile-lookup profile-period-lookup
+                                    next-period]]))
 
 (def profile
   {:commitments          100000
