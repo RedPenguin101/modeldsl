@@ -1,5 +1,7 @@
 (ns model-dsl.view
-  (:require [clojure.inspector :refer [inspect-table]]))
+  (:require [clojure.data.csv :as csv]
+            [clojure.java.io :as io]
+            [clojure.inspector :refer [inspect-table]]))
 
 (defn- row-order [model]
   (map first model))
@@ -15,13 +17,18 @@
     name
     nil))
 
-(keep noshows model)
 
-(defn view-scenario [model data]
-  (inspect-table
-    (invert
-      (concat [(map name (row-order model))]
-              (map (partial to-vector (row-order model)) data)))))
+(defn tabulate [model data]
+  (invert
+    (concat [(map name (row-order model))]
+            (map (partial to-vector (row-order model)) data))))
+
+(defn view-scenario [table]
+  (inspect-table table))
+
+(defn write-out-scenario [filename table]
+  (with-open [writer (io/writer (str "resources/" filename ".csv"))]
+    (csv/write-csv writer table)))
 
 (comment
   (def model
