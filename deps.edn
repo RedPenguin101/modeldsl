@@ -1,7 +1,8 @@
 {:deps
  {org.clojure/data.csv      {:mvn/version "1.0.0"}
   com.bhauman/figwheel-main {:mvn/version "0.2.11"}
-  reagent                   {:mvn/version "1.0.0-alpha2"}}
+  reagent                   {:mvn/version "1.0.0-alpha2"}
+  re-frame                  {:mvn/version "1.0.0"}}
 
  :paths ["src" "target" "resources"]
 
