@@ -27,6 +27,11 @@
 (defn accumulated [{:keys [new-period previous-periods]} key]
   (reduce + (map key (conj previous-periods new-period))))
 
+(defn model-if [options pred t-branch e-branch]
+  (if (interpret pred options)
+    (interpret t-branch options)
+    (interpret e-branch options)))
+
 (def put-ins #{'previous 'this 'profile-lookup 'profile-period-lookup 'if
                'accumulated})
 
@@ -39,10 +44,6 @@
         :else                  (apply (eval operator) (map #(interpret % options) operands))))
     function))
 
-(defn if [options pred t-branch e-branch]
-  (if (interpret pred options)
-    (interpret t-branch options)
-    (interpret e-branch options)))
 
 (defn- do-row [[key function {default :initial-value}] profile previous-periods new-period]
   {key (if (and default (empty? previous-periods))
@@ -61,7 +62,7 @@
 (defn run-model [model profile periods]
   (last (take (inc periods) (iterate (partial next-period model profile) []))))
 
-(comment 
+(comment
   (def demo-model
     '[[:period-number (increment (previous :period-number)) {:initial-value 1}]
       [:starting-aum  (previous :ending-aum) {:initial-value 0}]
@@ -79,6 +80,9 @@
                            (this :pnl)
                            (this :distribution))]])
 
+  (def demo-model2 '[[:period-number [:previous :period-number]
+                      {:initial-value 1}]])
+
   (def demo-profile {:commitments   100
                      :contributions [0.25 0.25 0.25 0.25]
                      :return        0.2
@@ -86,7 +90,7 @@
                                      [4 10 1/10]]}))
 
 (comment
-  (last (take 15 (iterate (partial next-period model profile)
+  (last (take 15 (iterate (partial next-period demo-model2 demo-profile)
                           [])))
   (run-model demo-model demo-profile 5))
 
