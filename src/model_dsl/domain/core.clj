@@ -1,9 +1,5 @@
 (ns model-dsl.domain.core)
 
-(def sum +)
-(def product *)
-(def increment inc)
-
 (defn previous [{previous-periods :previous-periods} key]
   (when (not-empty previous-periods)
     (key (last previous-periods))))
@@ -27,36 +23,40 @@
 (defn accumulated [{:keys [new-period previous-periods]} key]
   (reduce + (map key (conj previous-periods new-period))))
 
-(defn model-if [options pred t-branch e-branch]
-  (if (interpret pred options)
-    (interpret t-branch options)
-    (interpret e-branch options)))
+(def put-ins #{:previous :this :profile-lookup :profile-period-lookup :if
+               :accumulated})
 
-(def put-ins #{'previous 'this 'profile-lookup 'profile-period-lookup 'if
-               'accumulated})
+(def other-functions #{:product :increment :sum})
 
-(def put-ins2 #{:previous :this :profile-lookup :profile-period-lookup :if
-                :accumulated})
+(declare model-if)
 
 (def replacements
-  {:this           this
-   :previous       previous
-   :profile-lookup profile-lookup
-   :profile-period profile-period-lookup
-   :if             model-if
-   :accumulated    accumulated})
+  {:this                  this
+   :previous              previous
+   :profile-lookup        profile-lookup
+   :profile-period-lookup profile-period-lookup
+   :if                    model-if
+   :accumulated           accumulated
+   :product               *
+   :increment             inc
+   :sum                   +
+   :nth                   nth})
 
 (defn- interpret [function options]
   (if (coll? function)
     (let [[operator & operands] function]
       (cond
-        (= (count function) 1) (interpret operator options)
-        (put-ins2 operator)    (apply (operator replacements) options
-                                      (map #(interpret % options) operands))
-        (put-ins operator)     (apply (eval operator) options (map #(interpret % options) operands))
-        :else                  (apply (eval operator) (map #(interpret % options) operands))))
+        (= (count function) 1)            (interpret operator options)
+        (put-ins operator)                (apply (operator replacements) options
+                                                (map #(interpret % options) operands))
+        (contains? replacements operator) (apply (operator replacements) (map #(interpret % options) operands))
+        :else                             (throw (ex-info "FAIL" [operator operands]))))
     function))
 
+(defn model-if [options pred t-branch e-branch]
+  (if (interpret pred options)
+    (interpret t-branch options)
+    (interpret e-branch options)))
 
 (defn- do-row [[key function {default :initial-value}] profile previous-periods new-period]
   {key (if (and default (empty? previous-periods))
@@ -77,24 +77,23 @@
 
 (comment
   (def demo-model
-    '[[:period-number (increment (previous :period-number)) {:initial-value 1}]
-      [:starting-aum  (previous :ending-aum) {:initial-value 0}]
-      [:drawdown      (product (profile-lookup :commitments)
-                               (nth (profile-lookup :contributions)
-                                    (this :period-number)
-                                    0))]
-      [:pnl           (product (this :starting-aum) (profile-lookup :return))]
-      [:distribution  (product -1 (this :starting-aum)
-                               (profile-period-lookup
+    '[[:period-number (:increment (:previous :period-number)) {:initial-value 1}]
+      [:starting-aum  (:previous :ending-aum) {:initial-value 0}]
+      [:drawdown      (:product (:profile-lookup :commitments)
+                                (:nth (:profile-lookup :contributions)
+                                      (:this :period-number)
+                                      0))]
+      [:pnl           (:product (:this :starting-aum) (:profile-lookup :return))]
+      [:distribution  (:product -1 (:this :starting-aum)
+                                (:profile-period-lookup
                                  :distributions
-                                 (this :period-number)))]
-      [:ending-aum    (sum (this :drawdown)
-                           (this :starting-aum)
-                           (this :pnl)
-                           (this :distribution))]])
-
-  (def demo-model2 '[[:period-number [:previous :period-number]
-                      {:initial-value 1}]])
+                                 (:this :period-number)))]
+      [:ending-aum    (:sum (:this :drawdown)
+                            (:this :starting-aum)
+                            (:this :pnl)
+                            (:this :distribution))]])
+  (def demo-model2 [[:period-number [:increment [:previous :period-number]] {:initial-value 1}]
+                    ])
 
   (def demo-profile {:commitments   100
                      :contributions [0.25 0.25 0.25 0.25]
