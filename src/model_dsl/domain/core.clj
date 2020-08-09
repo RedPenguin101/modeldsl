@@ -61,24 +61,32 @@
 (defn run-model [model profile periods]
   (last (take (inc periods) (iterate (partial next-period model profile) []))))
 
+(comment 
+  (def demo-model
+    '[[:period-number (increment (previous :period-number)) {:initial-value 1}]
+      [:starting-aum  (previous :ending-aum) {:initial-value 0}]
+      [:drawdown      (product (profile-lookup :commitments)
+                               (nth (profile-lookup :contributions)
+                                    (this :period-number)
+                                    0))]
+      [:pnl           (product (this :starting-aum) (profile-lookup :return))]
+      [:distribution  (product -1 (this :starting-aum)
+                               (profile-period-lookup
+                                 :distributions
+                                 (this :period-number)))]
+      [:ending-aum    (sum (this :drawdown)
+                           (this :starting-aum)
+                           (this :pnl)
+                           (this :distribution))]])
+
+  (def demo-profile {:commitments   100
+                     :contributions [0.25 0.25 0.25 0.25]
+                     :return        0.2
+                     :distributions [[0 3 0]
+                                     [4 10 1/10]]}))
+
 (comment
-  (def model
-    '[[:period-number (increment (previous :period-number)) 0]
-      [:starting-aum  (previous :ending-aum) 0]
-      [:drawdown      (product (from-profile :commitments) (nth (from-profile :contributions) (this :period-number) 0))]
-      [:pnl           (product (this :starting-aum) (from-profile :return))]
-      [:distribution  (product -1 (this :starting-aum) (profile-period-lookup :distributions (this :period-number)))]
-      [:ending-aum    (sum (this :drawdown) (this :starting-aum) (this :pnl) (this :distribution))]])
-
-  (def model
-    '[(:period-number (inc (previous :period-number)) 0)])
-
-  (def profile {:commitments   100
-                :contributions [0.25 0.25 0.25 0.25]
-                :return        0.2
-                :distributions [[0 3 0]
-                                [4 10 1/10]]})
-
   (last (take 15 (iterate (partial next-period model profile)
-                          []))))
+                          [])))
+  (run-model demo-model demo-profile 5))
 

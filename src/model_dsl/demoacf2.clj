@@ -1,9 +1,9 @@
 (ns model-dsl.demoacf2
-  (:require [model-dsl.view :refer [tabulate view-scenario write-out-scenario]]
-            [model-dsl.core :refer [increment sum product
-                                    this previous accumulated if
-                                    profile-lookup profile-period-lookup
-                                    next-period]]))
+  (:require [model-dsl.domain.view :refer [tabulate view-scenario write-out-scenario]]
+            [model-dsl.domain.core :refer [increment sum product
+                                           this previous accumulated if
+                                           profile-lookup profile-period-lookup
+                                           next-period]]))
 
 (def profile
   {:commitments          {:gp    22500000

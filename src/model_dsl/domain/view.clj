@@ -1,4 +1,4 @@
-(ns model-dsl.view
+(ns model-dsl.domain.view
   (:require [clojure.data.csv :as csv]
             [clojure.java.io :as io]
             [clojure.inspector :refer [inspect-table]]))
