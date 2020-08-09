@@ -59,7 +59,7 @@
                 model)))
 
 (defn run-model [model profile periods]
-  (last (take periods (iterate (partial next-period model profile) []))))
+  (last (take (inc periods) (iterate (partial next-period model profile) []))))
 
 (comment
   (def model

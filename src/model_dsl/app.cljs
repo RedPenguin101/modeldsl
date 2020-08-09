@@ -18,19 +18,20 @@
               :on-change #(rf/dispatch [:set-model (.. % -target -value)])}])
 
 (defn output-component [output]
-  [:textarea {:value     "[initial output]"
+  [:textarea {:value     (str output)
               :read-only true}])
 
 (defn app []
   (let [current-profile @(rf/subscribe [:current-profile])
-        current-model   @(rf/subscribe [:current-model])]
+        current-model   @(rf/subscribe [:current-model])
+        current-output  @(rf/subscribe [:current-output])]
     [:<>
      [:h1.site__title
       [:span.site__title-text "Modelang"]]
      [:div.container
       [:div [profile-component current-profile]]
       [:div [model-component current-model]]]
-     [:div [output-component "hello"]]]))
+     [:div [output-component current-output]]]))
 
 (defn mount []
   (r.dom/render [app]
