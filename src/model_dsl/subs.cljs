@@ -11,7 +11,3 @@
   (fn [db _]
     (get db :profile)))
 
-(reg-sub
-  :current-output
-  (fn [db _]
-    (get db :output)))
