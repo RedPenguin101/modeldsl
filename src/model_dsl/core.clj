@@ -25,7 +25,11 @@
 (defn profile-period-lookup [{profile :profile} key period]
   (match-period (key profile) period))
 
-(def put-ins #{'previous 'this 'profile-lookup 'profile-period-lookup 'if})
+(defn accumulated [{:keys [new-period previous-periods]} key]
+  (reduce + (map key (conj previous-periods new-period))))
+
+(def put-ins #{'previous 'this 'profile-lookup 'profile-period-lookup 'if
+               'accumulated})
 
 (defn- interpret [function options]
   (if (coll? function)
