@@ -2,11 +2,9 @@
   (:require
    [reagent.dom :as r.dom]
    [re-frame.core :as rf]
-   [model-dsl.domain.core :refer [run-model]]
    [model-dsl.db]
    [model-dsl.subs]
-   [model-dsl.events]
-   [clojure.edn :as edn]))
+   [model-dsl.events]))
 
 
 (defn profile-component [profile]
@@ -26,12 +24,13 @@
         current-model   @(rf/subscribe [:current-model])
         current-output  @(rf/subscribe [:current-output])]
     [:<>
-     [:h1.site__title
-      [:span.site__title-text "Modelang"]]
-     [:div.container
+     [:div.container {:id "title-container"}
+      [:h1.site__title
+       [:span.site__title-text "Modelang"]]]
+     [:div.container {:id "model-container"}
       [:div [profile-component current-profile]]
       [:div [model-component current-model]]]
-     [:div [output-component current-output]]]))
+     [:div#output [output-component current-output]]]))
 
 (defn mount []
   (r.dom/render [app]
