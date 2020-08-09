@@ -1,5 +1,4 @@
-(ns model-dsl.core
-  (:require [clojure.core :as c]))
+(ns model-dsl.domain.core)
 
 (def sum +)
 (def product *)
@@ -58,6 +57,10 @@
                   (merge new-period (do-row model-row profile previous-periods new-period)))
                 {}
                 model)))
+
+(defn run-model [model profile periods]
+  (last (take periods (iterate (partial next-period model profile) []))))
+
 (comment
   (def model
     '[[:period-number (increment (previous :period-number)) 0]
