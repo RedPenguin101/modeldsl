@@ -35,11 +35,24 @@
 (def put-ins #{'previous 'this 'profile-lookup 'profile-period-lookup 'if
                'accumulated})
 
+(def put-ins2 #{:previous :this :profile-lookup :profile-period-lookup :if
+                :accumulated})
+
+(def replacements
+  {:this           this
+   :previous       previous
+   :profile-lookup profile-lookup
+   :profile-period profile-period-lookup
+   :if             model-if
+   :accumulated    accumulated})
+
 (defn- interpret [function options]
   (if (coll? function)
     (let [[operator & operands] function]
       (cond
         (= (count function) 1) (interpret operator options)
+        (put-ins2 operator)    (apply (operator replacements) options
+                                      (map #(interpret % options) operands))
         (put-ins operator)     (apply (eval operator) options (map #(interpret % options) operands))
         :else                  (apply (eval operator) (map #(interpret % options) operands))))
     function))
