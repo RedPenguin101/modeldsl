@@ -1,9 +1,6 @@
 (ns model-dsl.demoacf2
   (:require [model-dsl.domain.view :refer [tabulate view-scenario write-out-scenario]]
-            [model-dsl.domain.core :refer [increment sum product
-                                           this previous accumulated if
-                                           profile-lookup profile-period-lookup
-                                           next-period]]))
+            [model-dsl.domain.core :refer [next-period]]))
 
 (def profile
   {:commitments          {:gp    22500000
@@ -34,20 +31,20 @@
 
 (def model
   '[[:investor "lp"]
-    [:period-number (increment (previous :period-number))
+    [:period-number (:increment (:previous :period-number))
      {:initial-value 1}]
 
-    [:commitments   (:total (profile-lookup :commitments))]
+    [:commitments   (:total (:profile-lookup :commitments))]
 
-    [:starting-aum  (previous :ending-aum)
+    [:starting-aum  (:previous :ending-aum)
      {:initial-value 0}]
 
-    [:contribution  (product (this :commitments)
-                             (nth (profile-lookup :contribution-profile)
-                                  (dec (this :period-number))
-                                  0))]
+    [:contribution  (:product (:this :commitments)
+                              (:nth (:profile-lookup :contribution-profile)
+                                    (dec (:this :period-number))
+                                    0))]
 
-    [:pnl           (product (profile-lookup :return) (this :starting-aum))]
+    [:pnl           (:product (:profile-lookup :return) (:this :starting-aum))]
 
     [:illiquid-share (max 0 (* (profile-lookup :illiquid-share)
                                (- 1 (/ (this :period-number) 27))))]
