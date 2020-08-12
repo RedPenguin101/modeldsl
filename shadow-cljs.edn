@@ -1,0 +1,15 @@
+;; shadow-cljs configuration
+{:source-paths
+ ["src"]
+
+ :dependencies
+ [[reagent "1.0.0-alpha2"]]
+
+ :dev-http {9090 "public/"}
+
+ :builds
+ {:app {:output-dir "public/compiledjs/"
+        :asset-path "compiledjs"
+        :target     :browser
+        :modules    {:main {:init-fn model-dsl.main/main}}
+        :devtools   {:after-load model-dsl.main/reload}}}}
