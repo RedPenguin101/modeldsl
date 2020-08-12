@@ -58,3 +58,6 @@
       [:ending-aum    (sum (this :starting-aum)
                            (this :contribution)
                            (this :pnl))]]))
+
+(def p {:model-name "test model"})
+(def m [[:period-number (:increment (:previous :period-number))]])

@@ -1,6 +1,7 @@
 (ns model-dsl.events
   (:require [re-frame.core :refer [reg-event-db reg-event-fx]]
             [model-dsl.domain.core :refer [run-model]]
+            [model-dsl.domain.view :refer [tabulate]]
             [clojure.edn :as edn]))
 
 (reg-event-fx
@@ -21,7 +22,8 @@
 
 (defn recalc-output [model profile]
   (if (and (valid-edn? model) (valid-edn? profile))
-    (pr-str (run-model (edn/read-string model) (edn/read-string profile) 5))
+    (let [model (edn/read-string model)]
+      (pr-str (tabulate model (run-model model (edn/read-string profile) 5))))
     "Invalid EDN"))
 
 (reg-event-db
