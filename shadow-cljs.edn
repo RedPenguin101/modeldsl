@@ -11,5 +11,5 @@
  {:app {:output-dir "public/compiledjs/"
         :asset-path "compiledjs"
         :target     :browser
-        :modules    {:main {:init-fn model-dsl.main/main}}
-        :devtools   {:after-load model-dsl.main/reload}}}}
+        :modules    {:main {:init-fn model-dsl.frontend.main/main}}
+        :devtools   {:after-load model-dsl.frontend.main/reload}}}}
