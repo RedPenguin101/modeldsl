@@ -217,3 +217,4 @@
 (defn reload []
   (rf/dispatch-sync [:initialize-db])
   (mount))
+
