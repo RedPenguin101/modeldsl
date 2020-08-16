@@ -57,6 +57,11 @@
     db))
 
 (rf/reg-sub
+  :model
+  (fn [db _]
+    (:model-rows db)))
+
+(rf/reg-sub
   :current-model-row-updated
   (fn [db _]
     (:current-model-row db)))
@@ -158,19 +163,21 @@
 
 
 (defn output-component []
-  (if-let [model (try-model (:model-rows @state)
-                            (:profile @state)
-                            (:periods-to-model @state))]
-    (let [data (tabulate (:model-rows @state)
-                         model)]
-      [:table
-       [:tr {:style {:background-color :gray}}
-        (for [h (first data)] [:th h])]
-       (for [row (rest data)]
-         [:tr {:style {:background-color :gainsboro}}
-          (for [v row]
-            [:td v])])])
-    [:p "invalid model"]))
+  (let [profile    @(rf/subscribe [:profile-updated])
+        model-rows @(rf/subscribe [:model])]
+    (if-let [model (try-model model-rows
+                              profile
+                              10)]
+      (let [data (tabulate model-rows
+                           model)]
+        [:table
+         [:tr {:style {:background-color :gray}}
+          (for [h (first data)] [:th h])]
+         (for [row (rest data)]
+           [:tr {:style {:background-color :gainsboro}}
+            (for [v row]
+              [:td v])])])
+      [:p "invalid model"])))
 
 (defn app []
   [:div#content
