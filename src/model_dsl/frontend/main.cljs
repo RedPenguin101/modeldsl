@@ -3,22 +3,31 @@
             [reagent.dom :as rd]
             [re-frame.core :as rf]
             [clojure.edn :as edn]
+            [clojure.walk :refer [postwalk]]
             [goog.string :as gstring]
             [goog.string.format]
             [model-dsl.frontend.db]
             [model-dsl.frontend.table-display :refer [tabulate]]
             [model-dsl.domain.core :refer [run-model]]))
 
+;; HELPERS
+
 (defn valid-edn? [string]
   (try (edn/read-string string)
        (catch js/Object e false)))
+
+(defn keywordize [form]
+  (postwalk #(if (symbol? %) (keyword %) %) form))
+
+(defn symbolize [form]
+  (postwalk #(if (keyword? %) (symbol %) %) form))
 
 ;; EVENTS
 
 (rf/reg-event-db
   :update-current-model-row
   (fn [db [_ {:keys [name code name-in-model]}]]
-    (let [code (or code (pr-str (get-in db [:model-rows name])))]
+    (let [code (or code (pr-str (symbolize (get-in db [:model-rows name]))))]
       (assoc db :current-model-row
              {:name name :code code :name-in-model name-in-model}))))
 
@@ -59,46 +68,56 @@
 ;; COMPONENTS
 
 (defn model-component []
-  (fn []
-    (let [model-row @(rf/subscribe [:current-model-row-updated])]
-      [:form {:on-submit #(.preventDefault %)}
-       #_[:div.dev {:style {:border    "1px solid red"
-                            :font-size "0.8em"}}
-          (pr-str current-model-row)]
-       [:div
-        {:style {:margin-bottom 20}}
-        [:label.label "Name"
-         [:input.input.is-primary
-          {:name      "name"
-           :value     (:name model-row)
-           :on-change #(rf/dispatch
-                         [:update-current-model-row
-                          {:name (keyword (-> % .-target .-value))}])}]]]
-       [:div [:label.label "Code"
-              [:textarea.textarea.is-primary
-               {:name      "code"
-                :value     (:code model-row)
-                :on-change #(rf/dispatch
-                              [:update-current-model-row
-                               {:name (:name model-row)
-                                :code (-> % .-target .-value)}])
-                :style     {:width 400
-                            :background-color
-                            (if (valid-edn? (:code model-row))
-                              :white
-                              :red)}}]]]
-       [:button.button.is-primary
-        {:style    {:margin-top 20}
-         :on-click (fn [e]
-                     (.preventDefault e)
-                     (when (valid-edn? (:code model-row))
-                       (rf/dispatch
-                         [:update-model-row
-                          {:name (:name model-row)
-                           :code (edn/read-string (:code model-row))}])))}
-        (if (:name-in-model model-row)
-          "Update"
-          "Add")]])))
+  (let [dropdown-active (r/atom nil)]
+    (fn []
+      (let [row-order         @(rf/subscribe [:model-row-order])
+            model-rows        @(rf/subscribe [:model])
+            current-selection @(rf/subscribe [:current-model-row-updated])]
+        [:div
+         [:div.dropdown (when @dropdown-active {:class :is-active})
+          [:div.dropdown-trigger {:on-click #(swap! dropdown-active not)}
+           [:button.button {:width         "100%"
+                            :aria-haspopup "true"
+                            :aria-controls "dropdown-menu"}
+            [:span (:name current-selection)]
+            [:span.icon.is-small {:aria-hidden true} [:i.fas.fa-angle-down]]]
+           [:div#dropdown-menu.dropdown-menu {:role :menu}
+            [:div.dropdown-content
+             (for [measure-name row-order]
+               [:a.dropdown-item
+                {:class (when (= measure-name (:name current-selection)) :is-active)
+                 :on-click
+                 #(rf/dispatch [:update-current-model-row
+                                {:name          measure-name
+                                 :name-in-model true}])}
+                (name measure-name)])]]]]
+         [:div
+          [:textarea.textarea.is-primary
+           {:name      "code"
+            :value     (:code current-selection)
+            :on-change #(rf/dispatch
+                          [:update-current-model-row
+                           {:name (:name current-selection)
+                            :code (-> % .-target .-value)}])
+            :style     {:width      400
+                        :margin-top 20
+                        :background-color
+                        (if (valid-edn? (:code current-selection))
+                          :white
+                          :red)}}]
+          [:button.button.is-primary
+           {:style    {:margin-top 20}
+            :on-click (fn [e]
+                        (.preventDefault e)
+                        (when (valid-edn? (:code current-selection))
+                          (rf/dispatch
+                            [:update-model-row
+                             {:name (:name current-selection)
+                              :code (keywordize
+                                      (edn/read-string (:code current-selection)))}])))}
+           (if ((set row-order) (:name current-selection))
+             "Update"
+             "Add")]]]))))
 
 (defn model-display [current-edit]
   (let [rows      @(rf/subscribe [:model-row-order])
@@ -172,9 +191,9 @@
   [:div.container
    [:div.container {:style {:margin-bottom 20}}
     [:h1.title.is-1 "Catwalk"]]
-   #_[:div.dev {:style {:border    "1px solid red"
-                        :font-size "0.8em"}}
-      (pr-str @(rf/subscribe [:all]))]
+   [:div.dev {:style {:border    "1px solid red"
+                      :font-size "0.8em"}}
+    (pr-str @(rf/subscribe [:all]))]
    [:div#input.level
     [:div#profile.container {:style {:margin-right 50}}
      [:h4.title.is-4 "Profile"]
