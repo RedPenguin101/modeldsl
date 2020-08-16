@@ -2,9 +2,7 @@
   (:require [re-frame.core :as rf]))
 
 (def initial-db
-  {:profile           {:model-name    "Fund 5"
-                       :commitments   1000000
-                       :contributions [0 0.25 0.25 0.25 0.25]}
+  {:profile           "{:model-name \"Fund 5\", \n :commitments 1000000, \n :contributions [0 0.25 0.25 0.25 0.25]\n :hello \"world\"}"
    :model-rows
    {:period-number '(:increment (:previous :period-number))
     :starting-aum  '(:previous :ending-aum)
@@ -23,3 +21,7 @@
   :initialize-db
   (fn [_ _]
     initial-db))
+
+(defonce temp {:model-name    "Fund 5"
+               :commitments   1000000
+               :contributions [0 0.25 0.25 0.25 0.25]})

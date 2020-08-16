@@ -145,7 +145,7 @@
             [:span " ^"])])])))
 
 (defn codemirror-profile [profile-atom]
-  (let [local (r/atom (pr-str @profile-atom))]
+  (let [local (r/atom @profile-atom)]
     (fn []
       [:div
        [:div {:style {:border        (if (valid-edn? @local)
@@ -164,8 +164,7 @@
        [:button.button.is-primary
         {:on-click #(do (.preventDefault %)
                         (when (valid-edn? @local)
-                          (rf/dispatch [:update-profile
-                                        (edn/read-string @local)])))}
+                          (rf/dispatch [:update-profile @local])))}
         (if (valid-edn? @local)
           "Update"
           "Invalid EDN")]])))
@@ -175,7 +174,7 @@
        (catch js/Object e false)))
 
 (defn output-component []
-  (let [profile    @(rf/subscribe [:profile-updated])
+  (let [profile    (edn/read-string @(rf/subscribe [:profile-updated]))
         model-rows @(rf/subscribe [:model])]
     (if-let [model (try-model model-rows
                               profile
@@ -225,6 +224,6 @@
   (mount))
 
 (defn reload []
-  (rf/dispatch-sync [:initialize-db])
+  #_(rf/dispatch-sync [:initialize-db])
   (mount))
 
