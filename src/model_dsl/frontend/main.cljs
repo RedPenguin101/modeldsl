@@ -41,8 +41,13 @@
 
 (rf/reg-event-fx
   :update-model-row
-  (fn [{:keys [db _]} [_ {:keys [name code]}]]
+  (fn [{:keys [db]} [_ {:keys [name code]}]]
     {:db (assoc-in db [:model-rows name] code)}))
+
+(rf/reg-event-db
+  :update-profile
+  (fn [db [_ profile]]
+    (assoc db :profile profile)))
 
 ;; SUBS
 
@@ -60,6 +65,11 @@
   :model-row-order
   (fn [db _]
     (:row-order db)))
+
+(rf/reg-sub
+  :profile-updated
+  (fn [db _]
+    (:profile db)))
 
 ;; COMPONENTS
 
@@ -119,20 +129,32 @@
           (when (= @selection measure)
             [:span " ^"])])])))
 
-(defn profile-component [profile]
-  (let [local (r/atom profile)]
+(defn profile-component [profile-atom]
+  (let [local (r/atom (pr-str @profile-atom))]
     (fn [_]
-      [:textarea
-       {:style     {:width            400
-                    :height           150
-                    :background-color (if (valid-edn? @local)
-                                        :white
-                                        :red)}
-        :value     @local
-        :on-change (fn [e]
-                     (reset! local (-> e .-target .-value))
-                     (when (valid-edn? @local)
-                       (swap! state assoc :profile (edn/read-string @local))))}])))
+      [:div
+       [:div.dev {:style {:border    "1px solid red"
+                          :font-size "0.8em"}}
+        @local]
+       [:form {:on-submit #(.preventDefault %)}
+        [:textarea
+         {:style {:width            400
+                  :height           150
+                  :background-color (if (valid-edn? @local)
+                                      :white
+                                      :red)}
+          :value @local
+          :on-change
+          (fn [e]
+            (reset! local (-> e .-target .-value))
+            (js/console.log @local))}]
+        [:button {:on-click #(do (.preventDefault %)
+                                 (when (valid-edn? @local)
+                                   (rf/dispatch [:update-profile @local])))}
+         (if (valid-edn? @local)
+           "Update"
+           "Invalid EDN")]]])))
+
 
 (defn try-model [model profile periods]
   (try (run-model model profile periods)
@@ -162,7 +184,7 @@
    [:div#input {:style {:display :flex}}
     [:div#profile {:style {:margin-right 50}}
      [:h3 "Profile"]
-     [profile-component (pr-str (:profile @state))]]
+     [profile-component (rf/subscribe [:profile-updated])]]
     [:div#model
      [:h3 "Model"]
      [model-component]
