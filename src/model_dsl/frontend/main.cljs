@@ -6,6 +6,8 @@
             [clojure.walk :refer [postwalk]]
             [goog.string :as gstring]
             [goog.string.format]
+            ["codemirror/mode/clojure/clojure"]
+            ["react-codemirror2" :refer [UnControlled]]
             [model-dsl.frontend.db]
             [model-dsl.frontend.table-display :refer [tabulate]]
             [model-dsl.domain.core :refer [run-model]]))
@@ -67,11 +69,28 @@
 
 ;; COMPONENTS
 
+(defn codemirror-model []
+  (fn []
+    (let [{:keys [name code]} @(rf/subscribe [:current-model-row-updated])]
+      [:div {:style {:border        (if (valid-edn? code)
+                                      "1px solid #00d1b2"
+                                      "1px solid red")
+                     :margin-top    10
+                     :border-radius 5
+                     :padding       10
+                     :box-shadow    (when (not (valid-edn? code))
+                                      "0px 0px 5px red")}}
+       [:> UnControlled
+        {:value     code
+         :options   {:mode "clojure"}
+         :on-change (fn [_ _ v] (rf/dispatch [:update-current-model-row
+                                              {:name name
+                                               :code v}]))}]])))
+
 (defn model-component []
   (let [dropdown-active (r/atom nil)]
     (fn []
       (let [row-order         @(rf/subscribe [:model-row-order])
-            model-rows        @(rf/subscribe [:model])
             current-selection @(rf/subscribe [:current-model-row-updated])]
         [:div
          [:div.dropdown (when @dropdown-active {:class :is-active})
@@ -92,19 +111,7 @@
                                  :name-in-model true}])}
                 (name measure-name)])]]]]
          [:div
-          [:textarea.textarea.is-primary
-           {:name      "code"
-            :value     (:code current-selection)
-            :on-change #(rf/dispatch
-                          [:update-current-model-row
-                           {:name (:name current-selection)
-                            :code (-> % .-target .-value)}])
-            :style     {:width      400
-                        :margin-top 20
-                        :background-color
-                        (if (valid-edn? (:code current-selection))
-                          :white
-                          :red)}}]
+          [codemirror-model]
           [:button.button.is-primary
            {:style    {:margin-top 20}
             :on-click (fn [e]
@@ -137,25 +144,28 @@
           (when (= @selection measure)
             [:span " ^"])])])))
 
-(defn profile-component [profile-atom]
+(defn codemirror-profile [profile-atom]
   (let [local (r/atom (pr-str @profile-atom))]
-    (fn [_]
-      [:form {:on-submit #(.preventDefault %)}
-       [:textarea.textarea.is-primary
-        {:style {:width            400
-                 :height           150
-                 :margin-bottom    10
-                 :background-color (if (valid-edn? @local)
-                                     :white
-                                     :red)}
-         :value @local
-         :on-change
-         (fn [e]
-           (reset! local (-> e .-target .-value))
-           (js/console.log @local))}]
-       [:button.button.is-primary {:on-click #(do (.preventDefault %)
-                                                  (when (valid-edn? @local)
-                                                    (rf/dispatch [:update-profile @local])))}
+    (fn []
+      [:div
+       [:div {:style {:border        (if (valid-edn? @local)
+                                       "1px solid #00d1b2"
+                                       "1px solid red")
+                      :margin-top    10
+                      :margin-bottom 10
+                      :border-radius 5
+                      :padding       10
+                      :box-shadow    (when (not (valid-edn? @local))
+                                       "0px 0px 5px red")}}
+        [:> UnControlled
+         {:value     @local
+          :options   {:mode "clojure"}
+          :on-change (fn [_ _ v] (reset! local v))}]]
+       [:button.button.is-primary
+        {:on-click #(do (.preventDefault %)
+                        (when (valid-edn? @local)
+                          (rf/dispatch [:update-profile
+                                        (edn/read-string @local)])))}
         (if (valid-edn? @local)
           "Update"
           "Invalid EDN")]])))
@@ -191,13 +201,13 @@
   [:div.container
    [:div.container {:style {:margin-bottom 20}}
     [:h1.title.is-1 "Catwalk"]]
-   #_[:div.dev {:style {:border    "1px solid red"
-                        :font-size "0.8em"}}
-      (pr-str @(rf/subscribe [:all]))]
+   [:div.dev {:style {:border    "1px solid red"
+                      :font-size "0.8em"}}
+    (pr-str @(rf/subscribe [:all]))]
    [:div#input.level
     [:div#profile.container {:style {:margin-right 50}}
      [:h4.title.is-4 "Profile"]
-     [profile-component (rf/subscribe [:profile-updated])]]
+     [codemirror-profile (rf/subscribe [:profile-updated])]]
     [:div#model.container
      [:h4.title.is-4 "Model"]
      [model-component]
