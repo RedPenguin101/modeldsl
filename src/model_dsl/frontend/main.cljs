@@ -24,19 +24,28 @@
 (defn symbolize [form]
   (postwalk #(if (keyword? %) (symbol %) %) form))
 
+(defn extract-code [model-rows]
+  (reduce (fn [A [name value]]
+            (if (map? value)
+              (assoc A name (:code value))
+              (assoc A name value)))
+          {}
+          model-rows))
+
 ;; EVENTS
 
 (rf/reg-event-db
   :update-current-model-row
   (fn [db [_ {:keys [name code name-in-model]}]]
-    (let [code (or code (pr-str (symbolize (get-in db [:model-rows name]))))]
+    (let [code (or code (get-in db [:model-rows name :string-rep]))]
       (assoc db :current-model-row
              {:name name :code code :name-in-model name-in-model}))))
 
 (rf/reg-event-db
   :update-model-row
-  (fn [db [_ {:keys [name code]}]]
-    (assoc-in db [:model-rows name] code)))
+  (fn [db [_ {:keys [name code string-rep]}]]
+    (assoc-in db [:model-rows name] {:code       code
+                                     :string-rep string-rep})))
 
 (rf/reg-event-db
   :update-profile
@@ -119,9 +128,10 @@
                         (when (valid-edn? (:code current-selection))
                           (rf/dispatch
                             [:update-model-row
-                             {:name (:name current-selection)
-                              :code (keywordize
-                                      (edn/read-string (:code current-selection)))}])))}
+                             {:name       (:name current-selection)
+                              :code       (keywordize
+                                            (edn/read-string (:code current-selection)))
+                              :string-rep (:code current-selection)}])))}
            (if ((set row-order) (:name current-selection))
              "Update"
              "Add")]]]))))
@@ -175,7 +185,8 @@
 
 (defn output-component []
   (let [profile    (edn/read-string @(rf/subscribe [:profile-updated]))
-        model-rows @(rf/subscribe [:model])]
+        model-rows @(rf/subscribe [:model])
+        model-rows (extract-code model-rows)]
     (if-let [model (try-model model-rows
                               profile
                               10)]
