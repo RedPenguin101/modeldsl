@@ -99,19 +99,20 @@
         "Add"]])))
 
 (defn model-display [current-edit]
-  (let [rows @(rf/subscribe [:model-row-order])
-        s    (r/atom current-edit)]
+  (let [rows      @(rf/subscribe [:model-row-order])
+        selection (r/atom current-edit)]
     (fn []
-      @s
+      @selection
       [:div#modeldisplay
        (for [measure rows]
          [:p {:style    {:margin 0}
-              :on-click #(do (reset! s measure)
-                             (rf/dispatch [:update-current-model-row {:name measure}]))}
-          (when (= @s measure)
+              :on-click #(do (reset! selection measure)
+                             (rf/dispatch [:update-current-model-row
+                                           {:name measure}]))}
+          (when (= @selection measure)
             [:span ">"])
           (name measure)
-          (when (= @s measure)
+          (when (= @selection measure)
             [:span " ^"])])])))
 
 (defn profile-component [profile]
