@@ -3,6 +3,8 @@
             [reagent.dom :as rd]
             [re-frame.core :as rf]
             [clojure.edn :as edn]
+            [goog.string :as gstring]
+            [goog.string.format]
             [model-dsl.frontend.db]
             [model-dsl.frontend.table-display :refer [tabulate]]
             [model-dsl.domain.core :refer [run-model]]))
@@ -65,31 +67,35 @@
           (pr-str current-model-row)]
        [:div
         {:style {:margin-bottom 20}}
-        [:label "Name"
-         [:input {:name      "name"
-                  :value     (:name model-row)
-                  :on-change #(rf/dispatch
-                                [:update-current-model-row
-                                 {:name (keyword (-> % .-target .-value))}])}]]]
-       [:div [:label "Code"
-              [:textarea {:name      "code"
-                          :value     (:code model-row)
-                          :on-change #(rf/dispatch
-                                        [:update-current-model-row
-                                         {:name (:name model-row)
-                                          :code (-> % .-target .-value)}])
-                          :style     {:width 400
-                                      :background-color
-                                      (if (valid-edn? (:code model-row))
-                                        :white
-                                        :red)}}]]]
-       [:button {:on-click (fn [e]
-                             (.preventDefault e)
-                             (when (valid-edn? (:code model-row))
-                               (rf/dispatch
-                                 [:update-model-row
-                                  {:name (:name model-row)
-                                   :code (edn/read-string (:code model-row))}])))}
+        [:label.label "Name"
+         [:input.input.is-primary
+          {:name      "name"
+           :value     (:name model-row)
+           :on-change #(rf/dispatch
+                         [:update-current-model-row
+                          {:name (keyword (-> % .-target .-value))}])}]]]
+       [:div [:label.label "Code"
+              [:textarea.textarea.is-primary
+               {:name      "code"
+                :value     (:code model-row)
+                :on-change #(rf/dispatch
+                              [:update-current-model-row
+                               {:name (:name model-row)
+                                :code (-> % .-target .-value)}])
+                :style     {:width 400
+                            :background-color
+                            (if (valid-edn? (:code model-row))
+                              :white
+                              :red)}}]]]
+       [:button.button.is-primary
+        {:style    {:margin-top 20}
+         :on-click (fn [e]
+                     (.preventDefault e)
+                     (when (valid-edn? (:code model-row))
+                       (rf/dispatch
+                         [:update-model-row
+                          {:name (:name model-row)
+                           :code (edn/read-string (:code model-row))}])))}
         (if (:name-in-model model-row)
           "Update"
           "Add")]])))
@@ -116,9 +122,10 @@
   (let [local (r/atom (pr-str @profile-atom))]
     (fn [_]
       [:form {:on-submit #(.preventDefault %)}
-       [:textarea
+       [:textarea.textarea.is-primary
         {:style {:width            400
                  :height           150
+                 :margin-bottom    10
                  :background-color (if (valid-edn? @local)
                                      :white
                                      :red)}
@@ -127,9 +134,9 @@
          (fn [e]
            (reset! local (-> e .-target .-value))
            (js/console.log @local))}]
-       [:button {:on-click #(do (.preventDefault %)
-                                (when (valid-edn? @local)
-                                  (rf/dispatch [:update-profile @local])))}
+       [:button.button.is-primary {:on-click #(do (.preventDefault %)
+                                                  (when (valid-edn? @local)
+                                                    (rf/dispatch [:update-profile @local])))}
         (if (valid-edn? @local)
           "Update"
           "Invalid EDN")]])))
@@ -146,31 +153,38 @@
                               10)]
       (let [data (tabulate model-rows
                            model)]
-        [:table
-         [:tr {:style {:background-color :gray}}
-          (for [h (first data)] [:th h])]
-         (for [row (rest data)]
-           [:tr {:style {:background-color :gainsboro}}
-            (for [v row]
-              [:td v])])])
+        [:div.table-container
+         [:table.table.is-narrow.is-striped.is-hoverable
+          [:thead
+           [:tr
+            (for [h (first data)] [:th h])]]
+          [:tbody
+           (for [row (rest data)]
+             [:tr
+              (for [v row]
+                (if (number? v)
+                  [:td {:style {:text-align :right}}
+                   (gstring/format "%d" v)]
+                  [:td v]))])]]])
       [:p "invalid model"])))
 
 (defn app []
-  [:div#content
-   [:h1 "Catwalk"]
-   [:div.dev {:style {:border    "1px solid red"
-                      :font-size "0.8em"}}
-    (pr-str @(rf/subscribe [:all]))]
-   [:div#input {:style {:display :flex}}
-    [:div#profile {:style {:margin-right 50}}
-     [:h3 "Profile"]
+  [:div.container
+   [:div.container {:style {:margin-bottom 20}}
+    [:h1.title.is-1 "Catwalk"]]
+   #_[:div.dev {:style {:border    "1px solid red"
+                        :font-size "0.8em"}}
+      (pr-str @(rf/subscribe [:all]))]
+   [:div#input.level
+    [:div#profile.container {:style {:margin-right 50}}
+     [:h4.title.is-4 "Profile"]
      [profile-component (rf/subscribe [:profile-updated])]]
-    [:div#model
-     [:h3 "Model"]
+    [:div#model.container
+     [:h4.title.is-4 "Model"]
      [model-component]
-     [model-display :period-number]]]
+     #_[model-display :period-number]]]
    [:div#output
-    [:h3 "Output"]
+    [:h4.title.is-4 "Output"]
     [output-component]]]
   )
 
