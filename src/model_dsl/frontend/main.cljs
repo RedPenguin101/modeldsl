@@ -63,42 +63,40 @@
 ;; COMPONENTS
 
 (defn model-component []
-  (let [values (r/atom {:belh "blob"})]
-    (fn []
-      (let [current-model-row @(rf/subscribe [:current-model-row-updated])]
-        [:form {:on-submit #(.preventDefault %)}
-         [:div.dev {:style {:border    "1px solid red"
+  (fn []
+    (let [model-row @(rf/subscribe [:current-model-row-updated])]
+      [:form {:on-submit #(.preventDefault %)}
+       #_[:div.dev {:style {:border    "1px solid red"
                             :font-size "0.8em"}}
           (pr-str current-model-row)]
-         [:div
-          {:style {:margin-bottom 20}}
-          [:label "Name"
-           [:input {:name      "name"
-                    :value     (:name current-model-row)
-                    :on-change #(rf/dispatch
-                                  [:update-current-model-row
-                                   {:name (keyword (-> % .-target .-value))}])}]]]
-         [:div [:label "Code"
-                [:textarea {:name      "code"
-                            :value     (:code current-model-row)
-                            :on-change #(rf/dispatch
-                                          [:update-current-model-row
-                                           {:name (:name current-model-row)
-                                            :code (-> % .-target .-value)}])
-                            :style     {:width 400
-                                        :background-color
-                                        (if (valid-edn? (:code current-model-row))
-                                          :white
-                                          :red)}}]]]
-         [:button {:on-click (fn [e]
-                               (.preventDefault e)
-                               (when (valid-edn? (:code current-model-row))
-                                 (let [name (:name current-model-row)
-                                       code (edn/read-string
-                                              (:code current-model-row))]
-                                   (rf/dispatch [:update-model-row {:name name
-                                                                    :code code}]))))}
-          "Add"]]))))
+       [:div
+        {:style {:margin-bottom 20}}
+        [:label "Name"
+         [:input {:name      "name"
+                  :value     (:name model-row)
+                  :on-change #(rf/dispatch
+                                [:update-current-model-row
+                                 {:name (keyword (-> % .-target .-value))}])}]]]
+       [:div [:label "Code"
+              [:textarea {:name      "code"
+                          :value     (:code model-row)
+                          :on-change #(rf/dispatch
+                                        [:update-current-model-row
+                                         {:name (:name model-row)
+                                          :code (-> % .-target .-value)}])
+                          :style     {:width 400
+                                      :background-color
+                                      (if (valid-edn? (:code model-row))
+                                        :white
+                                        :red)}}]]]
+       [:button {:on-click (fn [e]
+                             (.preventDefault e)
+                             (when (valid-edn? (:code model-row))
+                               (rf/dispatch
+                                 [:update-model-row
+                                  {:name (:name model-row)
+                                   :code (edn/read-string (:code model-row))}])))}
+        "Add"]])))
 
 (defn model-display [current-edit]
   (let [rows @(rf/subscribe [:model-row-order])
