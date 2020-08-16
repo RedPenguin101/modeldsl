@@ -4,10 +4,21 @@
             [clojure.edn :as edn]
             [model-dsl.domain.core :refer [run-model]]))
 
-(defonce state (r/atom {:profile          {:model-name "Fund 5"}
-                        :model-rows       {:period-number
-                                           '(:increment (:previous :period-number))}
-                        :periods-to-model 10}))
+(defonce state
+  (r/atom
+    {:profile          {:model-name    "Fund 5"
+                        :commitments   1000000
+                        :contributions [0 0.25 0.25 0.25 0.25]}
+     :model-rows
+     {:period-number '(:increment (:previous :period-number))
+      :starting-aum  '(:previous :ending-aum)
+      :drawdowns     '(:product (:profile-lookup :commitments)
+                                (:nth (:profile-lookup :contributions)
+                                      (:this :period-number) 0))
+      :pnl           '(:product (:this :starting-aum) 0.05)
+      :ending-aum    '(:sum (:this :starting-aum) (:this :drawdowns) (:this :pnl))}
+     :row-order        [:period-number :starting-aum :drawdowns :pnl :ending-aum]
+     :periods-to-model 10}))
 
 (defn- row-order [model]
   (map first model))
@@ -18,10 +29,10 @@
 (defn- invert [periods]
   (apply map vector periods))
 
-(defn noshows [[name _ & [options]]]
-  (if (and options (= :hide (:display options)))
-    name
-    nil))
+(defn tabulate [model data]
+  (invert
+    (concat [(map name (row-order model))]
+            (map (partial to-vector (row-order model)) data))))
 
 (defn valid-edn? [string]
   (try (edn/read-string string)
@@ -62,14 +73,28 @@
                                (let [name (:name @s)
                                      code (edn/read-string (:code @s))]
                                  (swap! state assoc-in [:model-rows name] code))))}
-        "Add"]
-       [:div [:p "temp"]]])))
+        "Add"]])))
+
+(defn model-display [current-edit]
+  (let [s (r/atom current-edit)]
+    (fn []
+      @s
+      [:div#modeldisplay
+       (for [measure (:row-order @state)]
+         [:p {:style    {:margin 0}
+              :on-click #(reset! s measure)}
+          (when (= @s measure)
+            [:span ">"])
+          (name measure)
+          (when (= @s measure)
+            [:span " ^"])])])))
 
 (defn profile-component [profile]
   (let [local (r/atom profile)]
     (fn [_]
       [:textarea
        {:style     {:width            400
+                    :height           150
                     :background-color (if (valid-edn? @local)
                                         :white
                                         :red)}
@@ -78,11 +103,6 @@
                      (reset! local (-> e .-target .-value))
                      (when (valid-edn? @local)
                        (swap! state assoc :profile (edn/read-string @local))))}])))
-
-(defn tabulate [model data]
-  (invert
-    (concat [(map name (row-order model))]
-            (map (partial to-vector (row-order model)) data))))
 
 (defn try-model [model profile periods]
   (try (run-model model profile periods)
@@ -115,7 +135,8 @@
      [profile-component (pr-str (:profile @state))]]
     [:div#model
      [:h3 "Model"]
-     [model-component]]]
+     [model-component]
+     [model-display :period-number]]]
    [:div#output
     [:h3 "Output"]
     [output-component]]]
