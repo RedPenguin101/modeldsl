@@ -191,9 +191,9 @@
   [:div.container
    [:div.container {:style {:margin-bottom 20}}
     [:h1.title.is-1 "Catwalk"]]
-   [:div.dev {:style {:border    "1px solid red"
-                      :font-size "0.8em"}}
-    (pr-str @(rf/subscribe [:all]))]
+   #_[:div.dev {:style {:border    "1px solid red"
+                        :font-size "0.8em"}}
+      (pr-str @(rf/subscribe [:all]))]
    [:div#input.level
     [:div#profile.container {:style {:margin-right 50}}
      [:h4.title.is-4 "Profile"]
