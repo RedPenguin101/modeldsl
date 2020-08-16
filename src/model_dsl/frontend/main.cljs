@@ -132,33 +132,30 @@
 (defn profile-component [profile-atom]
   (let [local (r/atom (pr-str @profile-atom))]
     (fn [_]
-      [:div
-       [:div.dev {:style {:border    "1px solid red"
-                          :font-size "0.8em"}}
-        @local]
-       [:form {:on-submit #(.preventDefault %)}
-        [:textarea
-         {:style {:width            400
-                  :height           150
-                  :background-color (if (valid-edn? @local)
-                                      :white
-                                      :red)}
-          :value @local
-          :on-change
-          (fn [e]
-            (reset! local (-> e .-target .-value))
-            (js/console.log @local))}]
-        [:button {:on-click #(do (.preventDefault %)
-                                 (when (valid-edn? @local)
-                                   (rf/dispatch [:update-profile @local])))}
-         (if (valid-edn? @local)
-           "Update"
-           "Invalid EDN")]]])))
+      [:form {:on-submit #(.preventDefault %)}
+       [:textarea
+        {:style {:width            400
+                 :height           150
+                 :background-color (if (valid-edn? @local)
+                                     :white
+                                     :red)}
+         :value @local
+         :on-change
+         (fn [e]
+           (reset! local (-> e .-target .-value))
+           (js/console.log @local))}]
+       [:button {:on-click #(do (.preventDefault %)
+                                (when (valid-edn? @local)
+                                  (rf/dispatch [:update-profile @local])))}
+        (if (valid-edn? @local)
+          "Update"
+          "Invalid EDN")]])))
 
 
 (defn try-model [model profile periods]
   (try (run-model model profile periods)
        (catch js/Object e false)))
+
 
 (defn output-component []
   (if-let [model (try-model (:model-rows @state)
