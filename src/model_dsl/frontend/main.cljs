@@ -102,27 +102,10 @@
       (let [row-order         @(rf/subscribe [:model-row-order])
             current-selection @(rf/subscribe [:current-model-row-updated])]
         [:div
-         [:div.dropdown (when @dropdown-active {:class :is-active})
-          [:div.dropdown-trigger {:on-click #(swap! dropdown-active not)}
-           [:button.button {:width         "100%"
-                            :aria-haspopup "true"
-                            :aria-controls "dropdown-menu"}
-            [:span (:name current-selection)]
-            [:span.icon.is-small {:aria-hidden true} [:i.fas.fa-angle-down]]]
-           [:div#dropdown-menu.dropdown-menu {:role :menu}
-            [:div.dropdown-content
-             (for [measure-name row-order]
-               [:a.dropdown-item
-                {:class (when (= measure-name (:name current-selection)) :is-active)
-                 :on-click
-                 #(rf/dispatch [:update-current-model-row
-                                {:name          measure-name
-                                 :name-in-model true}])}
-                (name measure-name)])]]]]
-         [:div
-          [codemirror-model]
+         [codemirror-model]
+         [:div.container {:style {:margin-top 10}}
           [:button.button.is-primary
-           {:style    {:margin-top 20}
+           {:style    {:margin-right 20}
             :on-click (fn [e]
                         (.preventDefault e)
                         (when (valid-edn? (:code current-selection))
@@ -134,7 +117,24 @@
                               :string-rep (:code current-selection)}])))}
            (if ((set row-order) (:name current-selection))
              "Update"
-             "Add")]]]))))
+             "Add")]
+          [:div.dropdown (when @dropdown-active {:class :is-active})
+           [:div.dropdown-trigger {:on-click #(swap! dropdown-active not)}
+            [:button.button {:width         "100%"
+                             :aria-haspopup "true"
+                             :aria-controls "dropdown-menu"}
+             [:span (:name current-selection)]
+             [:span.icon.is-small {:aria-hidden true} [:i.fas.fa-angle-down]]]
+            [:div#dropdown-menu.dropdown-menu {:role :menu}
+             [:div.dropdown-content
+              (for [measure-name row-order]
+                [:a.dropdown-item
+                 {:class (when (= measure-name (:name current-selection)) :is-active)
+                  :on-click
+                  #(rf/dispatch [:update-current-model-row
+                                 {:name          measure-name
+                                  :name-in-model true}])}
+                 (name measure-name)])]]]]]]))))
 
 (defn model-display [current-edit]
   (let [rows      @(rf/subscribe [:model-row-order])
@@ -211,14 +211,14 @@
   [:div.container
    [:div.container {:style {:margin-bottom 20}}
     [:h1.title.is-1 "Catwalk"]]
-   [:div.dev {:style {:border    "1px solid red"
-                      :font-size "0.8em"}}
-    (pr-str @(rf/subscribe [:all]))]
-   [:div#input.level
-    [:div#profile.container {:style {:margin-right 50}}
+   #_[:div.dev {:style {:border    "1px solid red"
+                        :font-size "0.8em"}}
+      (pr-str @(rf/subscribe [:all]))]
+   [:div#input.columns
+    [:div#profile.column
      [:h4.title.is-4 "Profile"]
      [codemirror-profile (rf/subscribe [:profile-updated])]]
-    [:div#model.container
+    [:div#model.column
      [:h4.title.is-4 "Model"]
      [model-component]
      #_[model-display :period-number]]]
