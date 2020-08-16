@@ -15,8 +15,9 @@
     :ending-aum    '(:sum (:this :starting-aum) (:this :drawdowns) (:this :pnl))}
    :row-order         [:period-number :starting-aum :drawdowns :pnl :ending-aum]
    :periods-to-model  10
-   :current-model-row {:name :period-number
-                       :code "(:increment (:previous :period-number))"}})
+   :current-model-row {:name          :period-number
+                       :code          "(:increment (:previous :period-number))"
+                       :name-in-model true}})
 
 (rf/reg-event-db
   :initialize-db

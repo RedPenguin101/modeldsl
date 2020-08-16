@@ -22,8 +22,9 @@
       :ending-aum    '(:sum (:this :starting-aum) (:this :drawdowns) (:this :pnl))}
      :row-order         [:period-number :starting-aum :drawdowns :pnl :ending-aum]
      :periods-to-model  10
-     :current-model-row {:name :period-number
-                         :code "(:increment (:previous :period-number))"}}))
+     :current-model-row {:name          :period-number
+                         :code          "(:increment (:previous :period-number))"
+                         :name-in-model true}}))
 
 (defn valid-edn? [string]
   (try (edn/read-string string)
@@ -33,10 +34,10 @@
 
 (rf/reg-event-fx
   :update-current-model-row
-  (fn [{:keys [db]} [_ {:keys [name code]}]]
+  (fn [{:keys [db]} [_ {:keys [name code name-in-model]}]]
     (let [code (or code (pr-str (get-in db [:model-rows name])))]
       {:db (assoc db :current-model-row
-                  {:name name :code code})})))
+                  {:name name :code code :name-in-model name-in-model})})))
 
 (rf/reg-event-fx
   :update-model-row
@@ -96,7 +97,9 @@
                                  [:update-model-row
                                   {:name (:name model-row)
                                    :code (edn/read-string (:code model-row))}])))}
-        "Add"]])))
+        (if (:name-in-model model-row)
+          "Update"
+          "Add")]])))
 
 (defn model-display [current-edit]
   (let [rows      @(rf/subscribe [:model-row-order])
@@ -108,7 +111,8 @@
          [:p {:style    {:margin 0}
               :on-click #(do (reset! selection measure)
                              (rf/dispatch [:update-current-model-row
-                                           {:name measure}]))}
+                                           {:name          measure
+                                            :name-in-model true}]))}
           (when (= @selection measure)
             [:span ">"])
           (name measure)
