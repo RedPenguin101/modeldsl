@@ -7,42 +7,23 @@
             [model-dsl.frontend.table-display :refer [tabulate]]
             [model-dsl.domain.core :refer [run-model]]))
 
-(defonce state
-  (r/atom
-    {:profile           {:model-name    "Fund 5"
-                         :commitments   1000000
-                         :contributions [0 0.25 0.25 0.25 0.25]}
-     :model-rows
-     {:period-number '(:increment (:previous :period-number))
-      :starting-aum  '(:previous :ending-aum)
-      :drawdowns     '(:product (:profile-lookup :commitments)
-                                (:nth (:profile-lookup :contributions)
-                                      (:this :period-number) 0))
-      :pnl           '(:product (:this :starting-aum) 0.05)
-      :ending-aum    '(:sum (:this :starting-aum) (:this :drawdowns) (:this :pnl))}
-     :row-order         [:period-number :starting-aum :drawdowns :pnl :ending-aum]
-     :periods-to-model  10
-     :current-model-row {:name          :period-number
-                         :code          "(:increment (:previous :period-number))"
-                         :name-in-model true}}))
-
 (defn valid-edn? [string]
   (try (edn/read-string string)
        (catch js/Object e false)))
 
 ;; EVENTS
 
-(rf/reg-event-fx
+(rf/reg-event-db
   :update-current-model-row
-  (fn [{:keys [db]} [_ {:keys [name code name-in-model]}]]
+  (fn [db [_ {:keys [name code name-in-model]}]]
     (let [code (or code (pr-str (get-in db [:model-rows name])))]
-      {:db (assoc db :current-model-row
-                  {:name name :code code :name-in-model name-in-model})})))
+      (assoc db :current-model-row
+             {:name name :code code :name-in-model name-in-model}))))
 
-(rf/reg-event-fx
+(rf/reg-event-db
   :update-model-row
-  (fn [{:keys [db]} [_ {:keys [name code]}]]
-    {:db (assoc-in db [:model-rows name] code)}))
+  (fn [db [_ {:keys [name code]}]]
+    (assoc-in db [:model-rows name] code)))
 
 (rf/reg-event-db
   :update-profile
@@ -51,10 +32,7 @@
 
 ;; SUBS
 
-(rf/reg-sub
-  :all
-  (fn [db _]
-    db))
+(rf/reg-sub :all (fn [db _] db))
 
 (rf/reg-sub
   :model
@@ -156,11 +134,9 @@
           "Update"
           "Invalid EDN")]])))
 
-
 (defn try-model [model profile periods]
   (try (run-model model profile periods)
        (catch js/Object e false)))
-
 
 (defn output-component []
   (let [profile    @(rf/subscribe [:profile-updated])
