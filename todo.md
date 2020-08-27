@@ -5,8 +5,8 @@
 * DONE reimplement model component with dropdown
 * DONE edn formatting for textareas
 * DONE user inputs without : - gets parsed to keywords
+* DONE decimal formatting for output window
 * when a row in the output window is clicked on, change the current row selection to that
-* decimal formatting for output window
 * Add a new model row
 * implement re-ordering
 * change tabulate to take row-order from app-db

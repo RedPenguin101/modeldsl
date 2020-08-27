@@ -4,13 +4,17 @@
             [re-frame.core :as rf]
             [clojure.edn :as edn]
             [clojure.walk :refer [postwalk]]
+            [cljs.pprint :refer [cl-format]]
             [goog.string :as gstring]
             [goog.string.format]
+            [goog.i18n.NumberFormat.Format]
             ["codemirror/mode/clojure/clojure"]
             ["react-codemirror2" :refer [UnControlled]]
             [model-dsl.frontend.db]
             [model-dsl.frontend.table-display :refer [tabulate]]
-            [model-dsl.domain.core :refer [run-model]]))
+            [model-dsl.domain.core :refer [run-model]])
+  (:import (goog.i18n NumberFormat)
+           (goog.i18n.NumberFormat Format)))
 
 ;; HELPERS
 
@@ -31,6 +35,9 @@
               (assoc A name value)))
           {}
           model-rows))
+
+(defn decimal-format [num]
+  (.format (NumberFormat. Format/DECIMAL) (str num)))
 
 ;; EVENTS
 
@@ -203,7 +210,7 @@
               (for [v row]
                 (if (number? v)
                   [:td {:style {:text-align :right}}
-                   (gstring/format "%d" v)]
+                   (decimal-format v)]
                   [:td v]))])]]])
       [:p "invalid model"])))
 
