@@ -105,4 +105,3 @@
   (last (take 15 (iterate (partial next-period demo-model2 demo-profile)
                           [])))
   (run-model demo-model demo-profile 5))
-

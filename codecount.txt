@@ -1,0 +1,10 @@
+Frontend:
+  Main:   259
+  db       31
+  table:   16
+Domain:
+  core:   108
+  view:    64
+API        77
+
+TOTAL     555

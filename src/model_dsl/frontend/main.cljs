@@ -35,7 +35,10 @@
           model-rows))
 
 (defn decimal-format [num]
-  (.format (NumberFormat. Format/DECIMAL) (str num)))
+  (let [rounded (Math/round num)]
+    (if (zero? rounded)
+      "-"
+      (.format (NumberFormat. Format/DECIMAL) (str rounded)))))
 
 (defn format-measure-name [measure-name]
   (str/join " " (map str/capitalize (str/split (name measure-name) #"-"))))
@@ -203,13 +206,14 @@
         [:div.table-container
          [:table.table.is-narrow.is-striped.is-hoverable
           [:thead
-           [:tr
+           [:tr {:style {:white-space :nowrap}}
             (for [h (first data)] [:th h])]]
           [:tbody
            (for [row (rest data)]
              [:tr
               (let [measure-name (first row)]
-                [:td {:on-click 
+                [:td {:style {:white-space :nowrap}
+                      :on-click 
                       #(rf/dispatch [:update-current-model-row
                                      {:name (keyword measure-name)}])}
                  (format-measure-name measure-name)])
@@ -250,4 +254,3 @@
 (defn reload []
   #_(rf/dispatch-sync [:initialize-db])
   (mount))
-

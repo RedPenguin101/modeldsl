@@ -8,6 +8,8 @@
 * DONE decimal formatting for output window
 * DONE when a row in the output window is clicked on, change the current row selection to that
 * DONE output has string headers
+* DONE zeros format to "-"
+* DONE disable text wrapping of row names
 * Add a new model row
 * implement re-ordering
 * change tabulate to take row-order from app-db
@@ -15,7 +17,6 @@
   * recognizes undefined functions
 * date capability
 * export model to xlsx
-* disable text wrapping of row names
 * Delete model row
 * Override window
 * Codemirror: no skipping to end of output on type
