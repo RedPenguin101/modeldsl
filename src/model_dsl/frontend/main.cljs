@@ -4,9 +4,6 @@
             [re-frame.core :as rf]
             [clojure.edn :as edn]
             [clojure.walk :refer [postwalk]]
-            [cljs.pprint :refer [cl-format]]
-            [goog.string :as gstring]
-            [goog.string.format]
             [goog.i18n.NumberFormat.Format]
             ["codemirror/mode/clojure/clojure"]
             ["react-codemirror2" :refer [UnControlled]]
@@ -207,7 +204,12 @@
           [:tbody
            (for [row (rest data)]
              [:tr
-              (for [v row]
+              (let [measure-name (first row)]
+                [:td {:on-click 
+                      #(rf/dispatch [:update-current-model-row
+                                     {:name (keyword measure-name)}])}
+                 measure-name])
+              (for [v (rest row)]
                 (if (number? v)
                   [:td {:style {:text-align :right}}
                    (decimal-format v)]
