@@ -1,9 +1,10 @@
 (ns model-dsl.frontend.main
-  (:require [reagent.core :as r]
+  (:require [clojure.edn :as edn]
+            [clojure.walk :refer [postwalk]]
+            [clojure.string :as str]
+            [reagent.core :as r]
             [reagent.dom :as rd]
             [re-frame.core :as rf]
-            [clojure.edn :as edn]
-            [clojure.walk :refer [postwalk]]
             [goog.i18n.NumberFormat.Format]
             ["codemirror/mode/clojure/clojure"]
             ["react-codemirror2" :refer [UnControlled]]
@@ -35,6 +36,9 @@
 
 (defn decimal-format [num]
   (.format (NumberFormat. Format/DECIMAL) (str num)))
+
+(defn format-measure-name [measure-name]
+  (str/join " " (map str/capitalize (str/split (name measure-name) #"-"))))
 
 ;; EVENTS
 
@@ -208,7 +212,7 @@
                 [:td {:on-click 
                       #(rf/dispatch [:update-current-model-row
                                      {:name (keyword measure-name)}])}
-                 measure-name])
+                 (format-measure-name measure-name)])
               (for [v (rest row)]
                 (if (number? v)
                   [:td {:style {:text-align :right}}
