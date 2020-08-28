@@ -208,7 +208,7 @@
                       :on-click 
                       #(rf/dispatch [:update-current-model-row
                                      {:name (keyword measure-name)}])}
-                 (format-measure-name measure-name)])
+                 (stringify-measure-name measure-name)])
               (for [v (rest row)]
                 (if (number? v)
                   [:td {:style {:text-align :right}}
