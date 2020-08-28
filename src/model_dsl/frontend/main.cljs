@@ -198,6 +198,7 @@
                       :margin-bottom 10
                       :border-radius 5
                       :padding       10
+                      :height        362
                       :box-shadow    (when (not (valid-edn? @local))
                                        "0px 0px 5px red")}}
         [:> UnControlled
