@@ -133,6 +133,7 @@
             [:h3.title.is_h3 "Enter new model row name"]
             [:form {:on-submit #(do (.preventDefault %)
                                     (rf/dispatch [:new-model-row (keywordify-measure-name (:new-row-name-text @local))])
+                                    (rf/dispatch [:update-current-model-row {:name (keywordify-measure-name (:new-row-name-text @local))}])
                                     (swap! local update :creating-new? not)
                                     (swap! local dissoc :new-row-name-text))}
              [:div.field
