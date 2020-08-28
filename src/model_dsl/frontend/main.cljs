@@ -155,7 +155,11 @@
                   #(rf/dispatch [:update-current-model-row
                                  {:name          measure-name
                                   :name-in-model true}])}
-                 (name measure-name)])]]]]]]))))
+                 (name measure-name)])
+              [:a.dropdown-item 
+               {:style {:opacity 0.5}
+                :on-click #(swap! local update :creating-new? not)}
+               "Add new row"]]]]]]]))))
 
 (defn codemirror-profile [profile-atom]
   (let [local (r/atom @profile-atom)]
