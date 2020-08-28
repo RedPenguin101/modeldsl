@@ -40,8 +40,11 @@
       "-"
       (.format (NumberFormat. Format/DECIMAL) (str rounded)))))
 
-(defn format-measure-name [measure-name]
+(defn stringify-measure-name [measure-name]
   (str/join " " (map str/capitalize (str/split (name measure-name) #"-"))))
+
+(defn keywordify-measure-name [measure-name]
+  (keyword (str/lower-case (str/replace measure-name #" " "-"))))
 
 ;; EVENTS
 
