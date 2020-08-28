@@ -108,7 +108,7 @@
                                                :code v}]))}]])))
 
 (defn model-component []
-  (let [dropdown-active (r/atom nil)]
+  (let [local (r/atom nil)]
     (fn []
       (let [row-order         @(rf/subscribe [:model-row-order])
             current-selection @(rf/subscribe [:current-model-row-updated])]
@@ -129,8 +129,8 @@
            (if ((set row-order) (:name current-selection))
              "Update"
              "Add")]
-          [:div.dropdown (when @dropdown-active {:class :is-active})
-           [:div.dropdown-trigger {:on-click #(swap! dropdown-active not)}
+          [:div.dropdown (when (:dropdown-active @local) {:class :is-active})
+           [:div.dropdown-trigger {:on-click #(swap! local update :dropdown-active not)}
             [:button.button {:width         "100%"
                              :aria-haspopup "true"
                              :aria-controls "dropdown-menu"}
