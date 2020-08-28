@@ -147,24 +147,6 @@
                                   :name-in-model true}])}
                  (name measure-name)])]]]]]]))))
 
-(defn model-display [current-edit]
-  (let [rows      @(rf/subscribe [:model-row-order])
-        selection (r/atom current-edit)]
-    (fn []
-      @selection
-      [:div#modeldisplay
-       (for [measure rows]
-         [:p {:style    {:margin 0}
-              :on-click #(do (reset! selection measure)
-                             (rf/dispatch [:update-current-model-row
-                                           {:name          measure
-                                            :name-in-model true}]))}
-          (when (= @selection measure)
-            [:span ">"])
-          (name measure)
-          (when (= @selection measure)
-            [:span " ^"])])])))
-
 (defn codemirror-profile [profile-atom]
   (let [local (r/atom @profile-atom)]
     (fn []
@@ -237,8 +219,7 @@
      [codemirror-profile (rf/subscribe [:profile-updated])]]
     [:div#model.column
      [:h4.title.is-4 "Model"]
-     [model-component]
-     #_[model-display :period-number]]]
+     [model-component]]]
    [:div#output
     [:h4.title.is-4 "Output"]
     [output-component]]]

@@ -17,6 +17,11 @@
   * recognizes undefined functions
 * date capability
 * export model to xlsx
+* Export scenario to xlsx
 * Delete model row
 * Override window
 * Codemirror: no skipping to end of output on type
+* Historical data interface
+* Saving and loading scenarios
+* change number of periods to model
+* indicate unsaved profile / model
