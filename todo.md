@@ -10,7 +10,7 @@
 * DONE output has string headers
 * DONE zeros format to "-"
 * DONE disable text wrapping of row names
-* Add a new model row
+* DONE Add a new model row
 * implement re-ordering
 * change tabulate to take row-order from app-db
 * output is more descriptive about validity

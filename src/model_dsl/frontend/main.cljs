@@ -99,31 +99,33 @@
 
 ;; COMPONENTS
 
-(defn codemirror-model []
-  (fn []
-    (let [{:keys [name code]} @(rf/subscribe [:current-model-row-updated])]
-      [:div {:style {:border        (if (valid-edn? code)
-                                      "1px solid #00d1b2"
-                                      "1px solid red")
-                     :margin-top    10
-                     :border-radius 5
-                     :padding       10
-                     :box-shadow    (when (not (valid-edn? code))
-                                      "0px 0px 5px red")}}
-       [:> UnControlled
-        {:value     code
-         :options   {:mode "clojure"}
-         :on-change (fn [_ _ v] (rf/dispatch [:update-current-model-row
-                                              {:name name
-                                               :code v}]))}]])))
-
-(defn model-component []
-  (let [local (r/atom nil)]
+(defn model-dropdown []
+  (let [local (r/atom {:is-active false})]
     (fn []
       (let [row-order         @(rf/subscribe [:model-row-order])
             current-selection @(rf/subscribe [:current-model-row-updated])]
         [:div
-         [codemirror-model]
+         [:div.dropdown (when (:dropdown-active @local) {:class :is-active})
+          [:div.dropdown-trigger {:on-click #(swap! local update :dropdown-active not)}
+           [:button.button {:width         "100%"
+                            :aria-haspopup "true"
+                            :aria-controls "dropdown-menu"}
+            [:span (:name current-selection)]
+            [:span.icon.is-small {:aria-hidden true} [:i.fas.fa-angle-down]]]
+           [:div#dropdown-menu.dropdown-menu {:role :menu}
+            [:div.dropdown-content
+             (for [measure-name row-order]
+               [:a.dropdown-item
+                {:class (when (= measure-name (:name current-selection)) :is-active)
+                 :on-click
+                 #(rf/dispatch [:update-current-model-row
+                                {:name          measure-name
+                                 :name-in-model true}])}
+                (name measure-name)])
+             [:a.dropdown-item
+              {:style {:opacity 0.5}
+               :on-click #(swap! local update :creating-new? not)}
+              "Add new row"]]]]]
          [:div {:class [:modal (when (:creating-new? @local) :is-active)]}
           [:div.modal-background]
           [:div.modal-content
@@ -138,46 +140,51 @@
                        :on-change #(swap! local assoc :new-row-name-text (-> % .-target .-value))
                        :value (:new-row-name-text @local)}]]
              [:button.button.is-primary "save"]]]]
-          [:button.modal-close.is-large 
+          [:button.modal-close.is-large
            {:on-click #(do (swap! local update :creating-new? not)
                            (swap! local dissoc :new-row-name-text))}
-           "x"]]
-         [:div.container {:style {:margin-top 10}}
-          [:button.button.is-primary
-           {:style    {:margin-right 20}
-            :on-click (fn [e]
-                        (.preventDefault e)
-                        (when (valid-edn? (:code current-selection))
-                          (rf/dispatch
-                            [:update-model-row
-                             {:name       (:name current-selection)
-                              :code       (keywordize
-                                            (edn/read-string (:code current-selection)))
-                              :string-rep (:code current-selection)}])))}
-           (if ((set row-order) (:name current-selection))
-             "Update"
-             "Add")]
-          [:div.dropdown (when (:dropdown-active @local) {:class :is-active})
-           [:div.dropdown-trigger {:on-click #(swap! local update :dropdown-active not)}
-            [:button.button {:width         "100%"
-                             :aria-haspopup "true"
-                             :aria-controls "dropdown-menu"}
-             [:span (:name current-selection)]
-             [:span.icon.is-small {:aria-hidden true} [:i.fas.fa-angle-down]]]
-            [:div#dropdown-menu.dropdown-menu {:role :menu}
-             [:div.dropdown-content
-              (for [measure-name row-order]
-                [:a.dropdown-item
-                 {:class (when (= measure-name (:name current-selection)) :is-active)
-                  :on-click
-                  #(rf/dispatch [:update-current-model-row
-                                 {:name          measure-name
-                                  :name-in-model true}])}
-                 (name measure-name)])
-              [:a.dropdown-item 
-               {:style {:opacity 0.5}
-                :on-click #(swap! local update :creating-new? not)}
-               "Add new row"]]]]]]]))))
+           "x"]]]))))
+
+
+(defn codemirror-model []
+  (fn []
+    (let [{:keys [name code]} @(rf/subscribe [:current-model-row-updated])]
+      [:div {:style {:border        (if (valid-edn? code)
+                                      "1px solid #00d1b2"
+                                      "1px solid red")
+                     :margin-top    10
+                     :border-radius 5
+                     :padding       10
+                     :box-shadow    (when (not (valid-edn? code))
+                                      "0px 0px 5px red")}}
+       [model-dropdown]
+       [:> UnControlled
+        {:value     code
+         :options   {:mode "clojure"}
+         :on-change (fn [_ _ v] (rf/dispatch [:update-current-model-row
+                                              {:name name
+                                               :code v}]))}]])))
+
+(defn model-component []
+  (let [row-order         @(rf/subscribe [:model-row-order])
+        current-selection @(rf/subscribe [:current-model-row-updated])]
+    [:div
+     [codemirror-model]
+     [:div.container {:style {:margin-top 10}}
+      [:button.button.is-primary
+       {:style    {:margin-right 20}
+        :on-click (fn [e]
+                    (.preventDefault e)
+                    (when (valid-edn? (:code current-selection))
+                      (rf/dispatch
+                       [:update-model-row
+                        {:name       (:name current-selection)
+                         :code       (keywordize
+                                      (edn/read-string (:code current-selection)))
+                         :string-rep (:code current-selection)}])))}
+       (if ((set row-order) (:name current-selection))
+         "Update"
+         "Add")]]]))
 
 (defn codemirror-profile [profile-atom]
   (let [local (r/atom @profile-atom)]
