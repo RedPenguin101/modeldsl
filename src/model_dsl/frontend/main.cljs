@@ -62,6 +62,13 @@
                                      :string-rep string-rep})))
 
 (rf/reg-event-db
+ :new-model-row
+ (fn [db [_ name]]
+   (-> db
+       (assoc-in [:model-rows name] {:code nil :string-rep ""})
+       (update :row-order conj name))))
+
+(rf/reg-event-db
   :update-profile
   (fn [db [_ profile]]
     (assoc db :profile profile)))
