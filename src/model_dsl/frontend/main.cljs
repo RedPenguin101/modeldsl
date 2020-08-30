@@ -120,8 +120,32 @@
 
 ;; COMPONENTS
 
+(defn new-row-modal [modal-active?]
+  (let [new-row-name (r/atom nil)]
+    (fn [modal-active?]
+      [:div {:class [:modal (when @modal-active? :is-active)]}
+       [:div.modal-background]
+       [:div.modal-content
+        [:div.box
+         [:h3.title.is_h3 "Enter new model row name"]
+         [:form {:on-submit #(do (.preventDefault %)
+                                 (rf/dispatch [:new-model-row (keywordify-measure-name @new-row-name)])
+                                 (rf/dispatch [:update-current-model-row {:name (keywordify-measure-name @new-row-name)}])
+                                 (reset! modal-active? false)
+                                 (reset! new-row-name nil))}
+          [:div.field
+           [:input {:placeholder "Enter new model row name"
+                    :on-change #(reset! new-row-name (-> % .-target .-value))
+                    :value @new-row-name}]]
+          [:button.button.is-primary "save"]]]]
+       [:button.modal-close.is-large
+        {:on-click #(do (reset! modal-active? false)
+                        (reset! new-row-name nil))}
+        "x"]])))
+
 (defn model-dropdown []
-  (let [local (r/atom {:dropdown-active false})]
+  (let [local (r/atom {})
+        modal-active? (r/atom false)]
     (fn []
       (let [row-order         @(rf/subscribe [:model-row-order])
             current-selection @(rf/subscribe [:current-model-row-updated])]
@@ -166,27 +190,9 @@
              [:a.dropdown-item
               {:style {:opacity 0.5
                        :border-top (when (= :nothing (:drag-over @local)) "1px solid blue")}
-               :on-click #(swap! local update :creating-new? not)}
+               :on-click #(reset! modal-active? true)}
               "Add new row"]]]]]
-         [:div {:class [:modal (when (:creating-new? @local) :is-active)]}
-          [:div.modal-background]
-          [:div.modal-content
-           [:div.box
-            [:h3.title.is_h3 "Enter new model row name"]
-            [:form {:on-submit #(do (.preventDefault %)
-                                    (rf/dispatch [:new-model-row (keywordify-measure-name (:new-row-name-text @local))])
-                                    (rf/dispatch [:update-current-model-row {:name (keywordify-measure-name (:new-row-name-text @local))}])
-                                    (swap! local update :creating-new? not)
-                                    (swap! local dissoc :new-row-name-text))}
-             [:div.field
-              [:input {:placeholder "Enter new model row name"
-                       :on-change #(swap! local assoc :new-row-name-text (-> % .-target .-value))
-                       :value (:new-row-name-text @local)}]]
-             [:button.button.is-primary "save"]]]]
-          [:button.modal-close.is-large
-           {:on-click #(do (swap! local update :creating-new? not)
-                           (swap! local dissoc :new-row-name-text))}
-           "x"]]]))))
+         [new-row-modal modal-active?]]))))
 
 
 (defn codemirror-model []
