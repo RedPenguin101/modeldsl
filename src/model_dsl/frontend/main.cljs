@@ -123,9 +123,11 @@
             current-selection @(rf/subscribe [:current-model-row-updated])]
         [:div
          #_[:div.dev {:style {:border "1px solid red" :text "0.8em"}} @local]
-         [:div.dropdown (when (:dropdown-active @local) {:class :is-active})
+         [:div.dropdown {:class (when (:dropdown-active @local) :is-active)
+                         :style {:width "100%"}}
           [:div.dropdown-trigger {:on-click #(swap! local update :dropdown-active not)}
-           [:button.button {:width         "100%"
+           [:button.button {:style {:width 300
+                                    :justify-content :space-between }
                             :aria-haspopup "true"
                             :aria-controls "dropdown-menu"}
             [:span (:name current-selection)]
@@ -136,7 +138,11 @@
                [:a.dropdown-item
                 {:class (when (= measure-name (:name current-selection)) :is-active)
                  :on-click #(rf/dispatch [:update-current-model-row {:name measure-name}])
-                 :style {:border-top (when (= measure-name (:drag-over @local)) "1px solid blue")}
+                 :style {:border-top (when (= measure-name (:drag-over @local)) "1px solid blue")
+                         :width 290
+                         :display :flex
+                         :justify-content :space-between
+                         :padding-right "1em"}
                  :draggable true
                  :on-drag-start #(swap! local assoc :drag-item measure-name)
                  :on-drag-end (fn [_]
@@ -147,8 +153,8 @@
                                  (.preventDefault e)
                                  (swap! local assoc :drag-over measure-name))
                  :on-drag-leave #(swap! local assoc :drag-over :nothing)}
-                (name measure-name)
-                [:span {:on-click #(do (rf/dispatch [:remove-model-row measure-name])
+                [:p (name measure-name)]
+                [:div {:on-click #(do (rf/dispatch [:remove-model-row measure-name])
                                        (rf/dispatch [:update-current-model-row {:name (first row-order)}])
                                        (swap! local update :dropdown-active not)
                                        (.stopPropagation %))}
@@ -283,7 +289,7 @@
   [:div.container
    [:div.container {:style {:margin-bottom 20}}
     [:h1.title.is-1 "Catwalk"]]
-   #_[:div.dev {:style {:border    "1px solid red"
+   [:div.dev {:style {:border    "1px solid red"
                         :font-size "0.8em"}}
       (pr-str @(rf/subscribe [:all]))]
    [:div#input.columns
