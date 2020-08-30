@@ -162,7 +162,7 @@
                 {:class (when (= measure (:name selected-measure)) :is-active)
                  :on-click #(rf/dispatch [:update-current-model-row {:name measure}])
                  :style {:border-top (when (= measure (:drag-over @s)) "1px solid blue")
-                         :width 290
+                         :width 300
                          :display :flex
                          :justify-content :space-between
                          :padding-right "1em"}
@@ -176,17 +176,18 @@
                                  (.preventDefault e)
                                  (swap! s assoc :drag-over measure))
                  :on-drag-leave #(swap! s assoc :drag-over :nothing)}
-                [:p (name measure)]
-                [:div {:on-click #(do (rf/dispatch [:remove-model-row measure])
-                                       (rf/dispatch [:update-current-model-row {:name (first measures)}])
-                                       (swap! s update :dropdown-active not)
-                                       (.stopPropagation %))}
+                [:span (name measure)]
+                [:span.icon.is-small
+                 {:on-click #(do (rf/dispatch [:remove-model-row measure])
+                                 (rf/dispatch [:update-current-model-row {:name (first measures)}])
+                                 (swap! s update :dropdown-active not)
+                                 (.stopPropagation %))}
                  [:i.fas.fa-backspace]]])
              [:a.dropdown-item
               {:style {:opacity 0.5
                        :border-top (when (= :nothing (:drag-over @s)) "1px solid blue")}
                :on-click #(reset! modal-active? true)}
-              "Add new row"]]]]]
+              [:p "Add new row"]]]]]]
          [new-row-modal modal-active?]]))))
 
 
