@@ -13,7 +13,7 @@
 * DONE Add a new model row
 * DONE Delete model row
 * DONE implement re-ordering
-* change tabulate to take row-order from app-db
+* DONE change tabulate to take row-order from app-db
 * output is more descriptive about validity
   * recognizes undefined functions
 * date capability

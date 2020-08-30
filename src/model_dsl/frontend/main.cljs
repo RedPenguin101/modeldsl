@@ -251,13 +251,13 @@
 
 (defn output-component []
   (let [profile    (edn/read-string @(rf/subscribe [:profile-updated]))
-        model-rows @(rf/subscribe [:model])
-        model-rows (extract-code model-rows)]
-    (if-let [model (try-model model-rows
+        row-order @(rf/subscribe [:model-row-order])
+        code (extract-code @(rf/subscribe [:model]))]
+    (if-let [scenario (try-model (for [measure row-order]
+                                   [measure (measure code)])
                               profile
                               10)]
-      (let [data (tabulate model-rows
-                           model)]
+      (let [data (tabulate row-order scenario)]
         [:div.table-container
          [:table.table.is-narrow.is-striped.is-hoverable
           [:thead

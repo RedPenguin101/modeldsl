@@ -9,7 +9,7 @@
 (defn- invert [periods]
   (apply map vector periods))
 
-(defn tabulate [model data]
+(defn tabulate [row-order data]
   (invert
-    (concat [(map name (row-order model))]
-            (map (partial to-vector (row-order model)) data))))
+    (concat [(map name row-order)]
+            (map (partial to-vector row-order) data))))
