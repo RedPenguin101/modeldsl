@@ -46,6 +46,11 @@
 (defn keywordify-measure-name [measure-name]
   (keyword (str/lower-case (str/replace measure-name #" " "-"))))
 
+(defn vec-reorder [order before item]
+  (let [xs (remove #{item} order)
+        [head tail] (split-with #(not= % before) xs)]
+    (concat head [item] tail)))
+
 ;; EVENTS
 
 (rf/reg-event-db
@@ -61,6 +66,12 @@
   (fn [db [_ {:keys [name code string-rep]}]]
     (assoc-in db [:model-rows name] {:code       code
                                      :string-rep string-rep})))
+
+(rf/reg-event-db
+ :change-model-row-order
+ (fn [db [_ new-order]]
+   (println "change-model-row-order fired with" new-order)
+   (assoc db :row-order new-order)))
 
 (rf/reg-event-db
  :new-model-row
@@ -124,7 +135,18 @@
              (for [measure-name row-order]
                [:a.dropdown-item
                 {:class (when (= measure-name (:name current-selection)) :is-active)
-                 :on-click #(rf/dispatch [:update-current-model-row {:name measure-name}])}
+                 :on-click #(rf/dispatch [:update-current-model-row {:name measure-name}])
+                 :style {:border-top (when (= measure-name (:drag-over @local)) "1px solid blue")}
+                 :draggable true
+                 :on-drag-start #(swap! local assoc :drag-item measure-name)
+                 :on-drag-end (fn [_]
+                                (rf/dispatch [:change-model-row-order
+                                              (vec-reorder row-order (:drag-over @local) (:drag-item @local))])
+                                (swap! local dissoc :drag-item :drag-over))
+                 :on-drag-over (fn [e]
+                                 (.preventDefault e)
+                                 (swap! local assoc :drag-over measure-name))
+                 :on-drag-leave #(swap! local assoc :drag-over :nothing)}
                 (name measure-name)
                 [:span {:on-click #(do (rf/dispatch [:remove-model-row measure-name])
                                        (rf/dispatch [:update-current-model-row {:name (first row-order)}])
@@ -132,7 +154,8 @@
                                        (.stopPropagation %))}
                  [:i.fas.fa-backspace]]])
              [:a.dropdown-item
-              {:style {:opacity 0.5}
+              {:style {:opacity 0.5
+                       :border-top (when (= :nothing (:drag-over @local)) "1px solid blue")}
                :on-click #(swap! local update :creating-new? not)}
               "Add new row"]]]]]
          [:div {:class [:modal (when (:creating-new? @local) :is-active)]}
