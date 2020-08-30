@@ -16,17 +16,14 @@
 
 ;; HELPERS
 
-(defn valid-edn? [string]
+(defn- valid-edn? [string]
   (try (edn/read-string string)
        (catch js/Object e false)))
 
-(defn keywordize [form]
+(defn- keywordize [form]
   (postwalk #(if (symbol? %) (keyword %) %) form))
 
-(defn symbolize [form]
-  (postwalk #(if (keyword? %) (symbol %) %) form))
-
-(defn extract-code [model-rows]
+(defn- extract-code [model-rows]
   (reduce (fn [A [name value]]
             (if (map? value)
               (assoc A name (:code value))
@@ -34,24 +31,24 @@
           {}
           model-rows))
 
-(defn decimal-format [num]
+(defn- decimal-format [num]
   (let [rounded (Math/round num)]
     (if (zero? rounded)
       "-"
       (.format (NumberFormat. Format/DECIMAL) (str rounded)))))
 
-(defn stringify-measure-name [measure-name]
+(defn- stringify-measure-name [measure-name]
   (str/join " " (map str/capitalize (str/split (name measure-name) #"-"))))
 
-(defn keywordify-measure-name [measure-name]
+(defn- keywordify-measure-name [measure-name]
   (keyword (str/lower-case (str/replace measure-name #" " "-"))))
 
-(defn vec-reorder [order before item]
+(defn- vec-reorder [order before item]
   (let [xs (remove #{item} order)
         [head tail] (split-with #(not= % before) xs)]
     (concat head [item] tail)))
 
-(defn try-model [model profile periods]
+(defn- try-model [model profile periods]
   (try (run-model model profile periods)
        (catch js/Object e false)))
 
@@ -66,10 +63,22 @@
              {:name name :code code :name-in-model name-in-model}))))
 
 (rf/reg-event-db
+ :create-new-model-row
+ (fn [db [_ name]]
+   (-> db
+       (assoc-in [:model-rows name] {:code nil :string-rep ""})
+       (update :row-order conj name))))
+
+(rf/reg-event-db
   :update-model-row
   (fn [db [_ {:keys [name code string-rep]}]]
     (assoc-in db [:model-rows name] {:code       code
                                      :string-rep string-rep})))
+
+(rf/reg-event-db
+ :remove-model-row
+ (fn [db [_ name]]
+   (update db :row-order (fn [model-rows] (into [] (remove #(= % name) model-rows))))))
 
 (rf/reg-event-db
  :change-model-row-order
@@ -78,33 +87,21 @@
    (assoc db :row-order (vec new-order))))
 
 (rf/reg-event-db
- :new-model-row
- (fn [db [_ name]]
-   (-> db
-       (assoc-in [:model-rows name] {:code nil :string-rep ""})
-       (update :row-order conj name))))
-
-(rf/reg-event-db
-  :update-profile
-  (fn [db [_ profile]]
-    (assoc db :profile profile)))
-
-(rf/reg-event-db
- :remove-model-row
- (fn [db [_ name]]
-   (update db :row-order (fn [model-rows] (into [] (remove #(= % name) model-rows))))))
+ :update-profile
+ (fn [db [_ profile]]
+   (assoc db :profile profile)))
 
 ;; SUBS
 
 (rf/reg-sub :all (fn [db _] db))
 
 (rf/reg-sub
-  :model
+  :model-rows
   (fn [db _]
     (:model-rows db)))
 
 (rf/reg-sub
-  :current-model-row-updated
+  :current-model-row
   (fn [db _]
     (:current-model-row db)))
 
@@ -114,7 +111,7 @@
     (:row-order db)))
 
 (rf/reg-sub
-  :profile-updated
+  :profile
   (fn [db _]
     (:profile db)))
 
@@ -129,7 +126,7 @@
         [:div.box
          [:h3.title.is_h3 "Enter new model row name"]
          [:form {:on-submit #(do (.preventDefault %)
-                                 (rf/dispatch [:new-model-row (keywordify-measure-name @new-row-name)])
+                                 (rf/dispatch [:create-new-model-row (keywordify-measure-name @new-row-name)])
                                  (rf/dispatch [:update-current-model-row {:name (keywordify-measure-name @new-row-name)}])
                                  (reset! modal-active? false)
                                  (reset! new-row-name nil))}
@@ -143,53 +140,51 @@
                         (reset! new-row-name nil))}
         "x"]])))
 
-(defn model-dropdown []
-  (let [local (r/atom {})
+(defn measure-dropdown []
+  (let [s (r/atom {})
         modal-active? (r/atom false)]
     (fn []
-      (let [row-order         @(rf/subscribe [:model-row-order])
-            current-selection @(rf/subscribe [:current-model-row-updated])]
+      (let [measures         @(rf/subscribe [:model-row-order])
+            selected-measure @(rf/subscribe [:current-model-row])]
         [:div
-         #_[:div.dev {:style {:border "1px solid red" :text "0.8em"}} @local]
-         [:div.dropdown {:class (when (:dropdown-active @local) :is-active)
-                         :style {:width "100%"}}
-          [:div.dropdown-trigger {:on-click #(swap! local update :dropdown-active not)}
-           [:button.button {:style {:width 300
-                                    :justify-content :space-between }
+         #_[:div.dev {:style {:border "1px solid red" :text "0.8em"}} @s]
+         [:div.dropdown {:class (when (:dropdown-active @s) :is-active)}
+          [:div.dropdown-trigger {:on-click #(swap! s update :dropdown-active not)}
+           [:button.button {:style {:width 300 :justify-content :space-between }
                             :aria-haspopup "true"
                             :aria-controls "dropdown-menu"}
-            [:span (:name current-selection)]
+            [:span (:name selected-measure)]
             [:span.icon.is-small {:aria-hidden true} [:i.fas.fa-angle-down]]]
            [:div#dropdown-menu.dropdown-menu {:role :menu}
             [:div.dropdown-content
-             (for [measure-name row-order]
+             (for [measure measures]
                [:a.dropdown-item
-                {:class (when (= measure-name (:name current-selection)) :is-active)
-                 :on-click #(rf/dispatch [:update-current-model-row {:name measure-name}])
-                 :style {:border-top (when (= measure-name (:drag-over @local)) "1px solid blue")
+                {:class (when (= measure (:name selected-measure)) :is-active)
+                 :on-click #(rf/dispatch [:update-current-model-row {:name measure}])
+                 :style {:border-top (when (= measure (:drag-over @s)) "1px solid blue")
                          :width 290
                          :display :flex
                          :justify-content :space-between
                          :padding-right "1em"}
                  :draggable true
-                 :on-drag-start #(swap! local assoc :drag-item measure-name)
+                 :on-drag-start #(swap! s assoc :drag-item measure)
                  :on-drag-end (fn [_]
                                 (rf/dispatch [:change-model-row-order
-                                              (vec-reorder row-order (:drag-over @local) (:drag-item @local))])
-                                (swap! local dissoc :drag-item :drag-over))
+                                              (vec-reorder measures (:drag-over @s) (:drag-item @s))])
+                                (swap! s dissoc :drag-item :drag-over))
                  :on-drag-over (fn [e]
                                  (.preventDefault e)
-                                 (swap! local assoc :drag-over measure-name))
-                 :on-drag-leave #(swap! local assoc :drag-over :nothing)}
-                [:p (name measure-name)]
-                [:div {:on-click #(do (rf/dispatch [:remove-model-row measure-name])
-                                       (rf/dispatch [:update-current-model-row {:name (first row-order)}])
-                                       (swap! local update :dropdown-active not)
+                                 (swap! s assoc :drag-over measure))
+                 :on-drag-leave #(swap! s assoc :drag-over :nothing)}
+                [:p (name measure)]
+                [:div {:on-click #(do (rf/dispatch [:remove-model-row measure])
+                                       (rf/dispatch [:update-current-model-row {:name (first measures)}])
+                                       (swap! s update :dropdown-active not)
                                        (.stopPropagation %))}
                  [:i.fas.fa-backspace]]])
              [:a.dropdown-item
               {:style {:opacity 0.5
-                       :border-top (when (= :nothing (:drag-over @local)) "1px solid blue")}
+                       :border-top (when (= :nothing (:drag-over @s)) "1px solid blue")}
                :on-click #(reset! modal-active? true)}
               "Add new row"]]]]]
          [new-row-modal modal-active?]]))))
@@ -197,7 +192,7 @@
 
 (defn codemirror-model []
   (fn []
-    (let [{:keys [name code]} @(rf/subscribe [:current-model-row-updated])]
+    (let [{:keys [name code]} @(rf/subscribe [:current-model-row])]
       [:div {:style {:border        (if (valid-edn? code)
                                       "1px solid #00d1b2"
                                       "1px solid red")
@@ -206,7 +201,7 @@
                      :padding       10
                      :box-shadow    (when (not (valid-edn? code))
                                       "0px 0px 5px red")}}
-       [model-dropdown]
+       [measure-dropdown]
        [:> UnControlled
         {:value     code
          :options   {:mode "clojure"}
@@ -214,9 +209,9 @@
                                               {:name name
                                                :code v}]))}]])))
 
-(defn model-component []
+(defn model-window []
   (let [row-order         @(rf/subscribe [:model-row-order])
-        current-selection @(rf/subscribe [:current-model-row-updated])]
+        current-selection @(rf/subscribe [:current-model-row])]
     [:div
      [codemirror-model]
      [:div.container {:style {:margin-top 10}}
@@ -235,7 +230,7 @@
          "Update"
          "Add")]]]))
 
-(defn codemirror-profile [profile-atom]
+(defn profile-window [profile-atom]
   (let [local (r/atom @profile-atom)]
     (fn []
       [:div
@@ -261,10 +256,10 @@
           "Update"
           "Invalid EDN")]])))
 
-(defn output-component []
-  (let [profile    (edn/read-string @(rf/subscribe [:profile-updated]))
+(defn output-window []
+  (let [profile    (edn/read-string @(rf/subscribe [:profile]))
         row-order @(rf/subscribe [:model-row-order])
-        code (extract-code @(rf/subscribe [:model]))]
+        code (extract-code @(rf/subscribe [:model-rows]))]
     (if-let [scenario (try-model (for [measure row-order]
                                    [measure (measure code)])
                               profile
@@ -301,13 +296,13 @@
    [:div#input.columns
     [:div#profile.column
      [:h4.title.is-4 "Profile"]
-     [codemirror-profile (rf/subscribe [:profile-updated])]]
+     [profile-window (rf/subscribe [:profile])]]
     [:div#model.column
      [:h4.title.is-4 "Model"]
-     [model-component]]]
+     [model-window]]]
    [:div#output
     [:h4.title.is-4 "Output"]
-    [output-component]]])
+    [output-window]]])
 
 (defn mount []
   (rd/render [app] (.getElementById js/document "app")))
