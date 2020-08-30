@@ -11,6 +11,7 @@
 * DONE zeros format to "-"
 * DONE disable text wrapping of row names
 * DONE Add a new model row
+* DONE Delete model row
 * implement re-ordering
 * change tabulate to take row-order from app-db
 * output is more descriptive about validity
@@ -18,7 +19,6 @@
 * date capability
 * export model to xlsx
 * Export scenario to xlsx
-* Delete model row
 * Override window
 * Codemirror: no skipping to end of output on type
 * Historical data interface

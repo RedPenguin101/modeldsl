@@ -52,6 +52,7 @@
   :update-current-model-row
   (fn [db [_ {:keys [name code name-in-model]}]]
     (let [code (or code (get-in db [:model-rows name :string-rep]))]
+      (println "update current fired with" name code)
       (assoc db :current-model-row
              {:name name :code code :name-in-model name-in-model}))))
 
@@ -72,6 +73,11 @@
   :update-profile
   (fn [db [_ profile]]
     (assoc db :profile profile)))
+
+(rf/reg-event-db
+ :remove-model-row
+ (fn [db [_ name]]
+   (update db :row-order (fn [model-rows] (into [] (remove #(= % name) model-rows))))))
 
 ;; SUBS
 
@@ -100,11 +106,12 @@
 ;; COMPONENTS
 
 (defn model-dropdown []
-  (let [local (r/atom {:is-active false})]
+  (let [local (r/atom {:dropdown-active false})]
     (fn []
       (let [row-order         @(rf/subscribe [:model-row-order])
             current-selection @(rf/subscribe [:current-model-row-updated])]
         [:div
+         #_[:div.dev {:style {:border "1px solid red" :text "0.8em"}} @local]
          [:div.dropdown (when (:dropdown-active @local) {:class :is-active})
           [:div.dropdown-trigger {:on-click #(swap! local update :dropdown-active not)}
            [:button.button {:width         "100%"
@@ -117,11 +124,13 @@
              (for [measure-name row-order]
                [:a.dropdown-item
                 {:class (when (= measure-name (:name current-selection)) :is-active)
-                 :on-click
-                 #(rf/dispatch [:update-current-model-row
-                                {:name          measure-name
-                                 :name-in-model true}])}
-                (name measure-name)])
+                 :on-click #(rf/dispatch [:update-current-model-row {:name measure-name}])}
+                (name measure-name)
+                [:span {:on-click #(do (rf/dispatch [:remove-model-row measure-name])
+                                       (rf/dispatch [:update-current-model-row {:name (first row-order)}])
+                                       (swap! local update :dropdown-active not)
+                                       (.stopPropagation %))}
+                 [:i.fas.fa-backspace]]])
              [:a.dropdown-item
               {:style {:opacity 0.5}
                :on-click #(swap! local update :creating-new? not)}
