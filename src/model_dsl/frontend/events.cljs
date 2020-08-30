@@ -4,36 +4,34 @@
 ;; EVENTS
 
 (rf/reg-event-db
- :update-selected-measure
- (fn [db [_ {:keys [name code name-in-model]}]]
-   (let [code (or code (get-in db [:model-rows name :string-rep]))]
+ :select-measure
+ (fn [db [_ {:keys [name code]}]]
+   (let [code (or code (get-in db [:model name :string-rep]))]
      (println "update-selected-measure fired with" name code)
-     (assoc db :current-model-row
-            {:name name :code code :name-in-model name-in-model}))))
+     (assoc db :selected-measure {:name name :code code}))))
 
 (rf/reg-event-db
  :create-new-measure
  (fn [db [_ name]]
    (-> db
-       (assoc-in [:model-rows name] {:code nil :string-rep ""})
-       (update :row-order conj name))))
+       (assoc-in [:model name] {:code nil :string-rep ""})
+       (update :measure-order conj name))))
 
 (rf/reg-event-db
  :update-measure
  (fn [db [_ {:keys [name code string-rep]}]]
-   (assoc-in db [:model-rows name] {:code       code
-                                    :string-rep string-rep})))
+   (assoc-in db [:model name] {:code code :string-rep string-rep})))
 
 (rf/reg-event-db
  :remove-measure
  (fn [db [_ name]]
-   (update db :row-order (fn [measures] (into [] (remove #(= % name) measures))))))
+   (update db :measure-order (fn [measures] (into [] (remove #(= % name) measures))))))
 
 (rf/reg-event-db
  :change-measure-order
  (fn [db [_ new-order]]
    (println "change-measure-order fired with" new-order)
-   (assoc db :row-order (vec new-order))))
+   (assoc db :measure-order (vec new-order))))
 
 (rf/reg-event-db
  :update-profile
@@ -47,17 +45,17 @@
 (rf/reg-sub
  :measures
  (fn [db _]
-   (:model-rows db)))
+   (:model db)))
 
 (rf/reg-sub
  :selected-measure
  (fn [db _]
-   (:current-model-row db)))
+   (:selected-measure db)))
 
 (rf/reg-sub
  :measure-order
  (fn [db _]
-   (:row-order db)))
+   (:measure-order db)))
 
 (rf/reg-sub
  :profile

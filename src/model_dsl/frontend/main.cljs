@@ -26,9 +26,7 @@
 
 (defn- extract-code [model]
   (reduce (fn [A [name value]]
-            (if (map? value)
-              (assoc A name (:code value))
-              (assoc A name value)))
+            (assoc A name (:code value)))
           {}
           model))
 
@@ -65,7 +63,7 @@
          [:h3.title.is_h3 "Enter new Measure Name"]
          [:form {:on-submit #(do (.preventDefault %)
                                  (rf/dispatch [:create-new-measure (keywordify-measure-name @new-measure-name)])
-                                 (rf/dispatch [:update-selected-measure {:name (keywordify-measure-name @new-measure-name)}])
+                                 (rf/dispatch [:select-measure {:name (keywordify-measure-name @new-measure-name)}])
                                  (reset! active? false)
                                  (reset! new-measure-name nil))}
           [:div.field
@@ -95,7 +93,7 @@
              (for [measure measures]
                [:a.dropdown-item
                 {:class (when (= measure (:name selected-measure)) :is-active)
-                 :on-click #(rf/dispatch [:update-selected-measure {:name measure}])
+                 :on-click #(rf/dispatch [:select-measure {:name measure}])
                  :style {:border-top (when (= measure (:drag-over @s)) "1px solid blue")
                          :width 300
                          :display :flex
@@ -112,7 +110,7 @@
                 [:span (name measure)]
                 [:span.icon.is-small
                  {:on-click #(do (rf/dispatch [:remove-measure measure])
-                                 (rf/dispatch [:update-selected-measure {:name (first measures)}])
+                                 (rf/dispatch [:select-measure {:name (first measures)}])
                                  (swap! s update :dropdown-active not)
                                  (.stopPropagation %))}
                  [:i.fas.fa-backspace]]])
@@ -138,13 +136,10 @@
        [:> UnControlled
         {:value     code
          :options   {:mode "clojure"}
-         :on-change (fn [_ _ v] (rf/dispatch [:update-selected-measure
-                                              {:name name
-                                               :code v}]))}]])))
+         :on-change (fn [_ _ v] (rf/dispatch [:select-measure {:name name :code v}]))}]])))
 
 (defn model-window []
-  (let [row-order         @(rf/subscribe [:measure-order])
-        current-selection @(rf/subscribe [:selected-measure])]
+  (let [current-selection @(rf/subscribe [:selected-measure])]
     [:div
      [codemirror-model]
      [:div.container {:style {:margin-top 10}}
@@ -156,36 +151,32 @@
                       (rf/dispatch
                        [:update-measure
                         {:name       (:name current-selection)
-                         :code       (keywordize
-                                      (edn/read-string (:code current-selection)))
+                         :code       (keywordize (edn/read-string (:code current-selection)))
                          :string-rep (:code current-selection)}])))}
-       (if ((set row-order) (:name current-selection))
+       (if (valid-edn? (:code current-selection))
          "Update"
-         "Add")]]]))
+         "Invalid EDN")]]]))
 
 (defn profile-window [profile-atom]
-  (let [local (r/atom @profile-atom)]
+  (let [profile (r/atom @profile-atom)]
     (fn []
       [:div
-       [:div {:style {:border        (if (valid-edn? @local)
-                                       "1px solid #00d1b2"
-                                       "1px solid red")
+       [:div {:style {:border        (if (valid-edn? @profile) "1px solid #00d1b2" "1px solid red")
                       :margin-top    10
                       :margin-bottom 10
                       :border-radius 5
                       :padding       10
                       :height        362
-                      :box-shadow    (when (not (valid-edn? @local))
-                                       "0px 0px 5px red")}}
+                      :box-shadow    (when (not (valid-edn? @profile)) "0px 0px 5px red")}}
         [:> UnControlled
-         {:value     @local
+         {:value     @profile
           :options   {:mode "clojure"}
-          :on-change (fn [_ _ v] (reset! local v))}]]
+          :on-change (fn [_ _ v] (reset! profile v))}]]
        [:button.button.is-primary
         {:on-click #(do (.preventDefault %)
-                        (when (valid-edn? @local)
-                          (rf/dispatch [:update-profile @local])))}
-        (if (valid-edn? @local)
+                        (when (valid-edn? @profile)
+                          (rf/dispatch [:update-profile @profile])))}
+        (if (valid-edn? @profile)
           "Update"
           "Invalid EDN")]])))
 
@@ -209,7 +200,7 @@
               (let [measure-name (first row)]
                 [:td {:style {:white-space :nowrap}
                       :on-click 
-                      #(rf/dispatch [:update-selected-measure
+                      #(rf/dispatch [:select-measure
                                      {:name (keyword measure-name)}])}
                  (stringify-measure-name measure-name)])
               (for [v (rest row)]

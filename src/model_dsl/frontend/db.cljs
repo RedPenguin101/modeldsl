@@ -4,7 +4,7 @@
 (def initial-db
   {:profile
    "{:model-name \"Fund 5\", \n :commitments 1000000, \n :contributions [0 0.25 0.25 0.25 0.25]\n :hello \"world\"\n :happiness 123}"
-   :model-rows
+   :model
    {:period-number
     {:code       '(:increment (:previous :period-number))
      :string-rep "(increment (previous period-number))\n"}
@@ -19,10 +19,9 @@
                                       (:this :drawdowns)
                                       (:this :pnl)),
                    :string-rep "(sum (this starting-aum) \n (this drawdowns) \n (this pnl))"}},
-   :row-order         [:period-number :starting-aum :drawdowns :pnl :ending-aum], :periods-to-model 10,
-   :current-model-row {:name          :period-number,
-                       :code          "(increment (previous period-number))\n",
-                       :name-in-model nil}})
+   :measure-order         [:period-number :starting-aum :drawdowns :pnl :ending-aum], :periods-to-model 10,
+   :selected-measure {:name          :period-number,
+                       :code          "(increment (previous period-number))\n"}})
 
 (rf/reg-event-db
   :initialize-db
