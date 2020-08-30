@@ -71,7 +71,7 @@
  :change-model-row-order
  (fn [db [_ new-order]]
    (println "change-model-row-order fired with" new-order)
-   (assoc db :row-order new-order)))
+   (assoc db :row-order (vec new-order))))
 
 (rf/reg-event-db
  :new-model-row
