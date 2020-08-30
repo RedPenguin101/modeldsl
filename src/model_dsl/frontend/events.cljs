@@ -7,7 +7,7 @@
  :select-measure
  (fn [db [_ {:keys [name code]}]]
    (let [code (or code (get-in db [:model name :string-rep]))]
-     (println "update-selected-measure fired with" name code)
+     (println "select-measure fired with" name code)
      (assoc db :selected-measure {:name name :code code}))))
 
 (rf/reg-event-db
@@ -43,7 +43,7 @@
 (rf/reg-sub :all (fn [db _] db))
 
 (rf/reg-sub
- :measures
+ :model
  (fn [db _]
    (:model db)))
 

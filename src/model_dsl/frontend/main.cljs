@@ -139,7 +139,7 @@
          :on-change (fn [_ _ v] (rf/dispatch [:select-measure {:name name :code v}]))}]])))
 
 (defn model-window []
-  (let [current-selection @(rf/subscribe [:selected-measure])]
+  (let [{:keys [name code]} @(rf/subscribe [:selected-measure])]
     [:div
      [codemirror-model]
      [:div.container {:style {:margin-top 10}}
@@ -147,13 +147,12 @@
        {:style    {:margin-right 20}
         :on-click (fn [e]
                     (.preventDefault e)
-                    (when (valid-edn? (:code current-selection))
-                      (rf/dispatch
-                       [:update-measure
-                        {:name       (:name current-selection)
-                         :code       (keywordize (edn/read-string (:code current-selection)))
-                         :string-rep (:code current-selection)}])))}
-       (if (valid-edn? (:code current-selection))
+                    (when (valid-edn? code)
+                      (rf/dispatch [:update-measure
+                                    {:name       name
+                                     :code       (keywordize (edn/read-string code))
+                                     :string-rep code}])))}
+       (if (valid-edn? code)
          "Update"
          "Invalid EDN")]]]))
 
@@ -182,31 +181,29 @@
 
 (defn output-window []
   (let [profile    (edn/read-string @(rf/subscribe [:profile]))
-        row-order @(rf/subscribe [:measure-order])
-        code (extract-code @(rf/subscribe [:measures]))]
-    (if-let [scenario (try-model (for [measure row-order]
-                                   [measure (measure code)])
-                              profile
-                              10)]
-      (let [data (tabulate row-order scenario)]
+        measures @(rf/subscribe [:measure-order])
+        model (extract-code @(rf/subscribe [:model]))]
+    (if-let [scenario (try-model (for [measure-name measures] 
+                                   [measure-name (measure-name model)])
+                                 profile
+                                 10)]
+      (let [data (tabulate measures scenario)]
         [:div.table-container
          [:table.table.is-narrow.is-striped.is-hoverable
           [:thead
            [:tr {:style {:white-space :nowrap}}
-            (for [h (first data)] [:th h])]]
+            (for [h (first data)] 
+              [:th h])]]
           [:tbody
            (for [row (rest data)]
              [:tr
               (let [measure-name (first row)]
                 [:td {:style {:white-space :nowrap}
-                      :on-click 
-                      #(rf/dispatch [:select-measure
-                                     {:name (keyword measure-name)}])}
+                      :on-click #(rf/dispatch [:select-measure {:name (keyword measure-name)}])}
                  (stringify-measure-name measure-name)])
               (for [v (rest row)]
                 (if (number? v)
-                  [:td {:style {:text-align :right}}
-                   (decimal-format v)]
+                  [:td {:style {:text-align :right}} (decimal-format v)]
                   [:td v]))])]]])
       [:p "invalid model"])))
 
