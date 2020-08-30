@@ -211,9 +211,7 @@
   [:div.container
    [:div.container {:style {:margin-bottom 20}}
     [:h1.title.is-1 "Catwalk"]]
-   #_[:div.dev {:style {:border    "1px solid red"
-                        :font-size "0.8em"}}
-      (pr-str @(rf/subscribe [:all]))]
+   #_[:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
    [:div#input.columns
     [:div#profile.column
      [:h4.title.is-4 "Profile"]

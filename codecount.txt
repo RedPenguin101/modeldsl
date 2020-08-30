@@ -1,10 +1,12 @@
 Frontend:
-  Main:   259
-  db       31
+  Main:   235
+  events:  64
+  db       29
   table:   16
 Domain:
   core:   108
   view:    64
 API        77
 
-TOTAL     555
+TOTAL     593
+(FE ONLY) 452
