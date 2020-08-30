@@ -51,6 +51,10 @@
         [head tail] (split-with #(not= % before) xs)]
     (concat head [item] tail)))
 
+(defn try-model [model profile periods]
+  (try (run-model model profile periods)
+       (catch js/Object e false)))
+
 ;; EVENTS
 
 (rf/reg-event-db
@@ -251,10 +255,6 @@
           "Update"
           "Invalid EDN")]])))
 
-(defn try-model [model profile periods]
-  (try (run-model model profile periods)
-       (catch js/Object e false)))
-
 (defn output-component []
   (let [profile    (edn/read-string @(rf/subscribe [:profile-updated]))
         row-order @(rf/subscribe [:model-row-order])
@@ -289,7 +289,7 @@
   [:div.container
    [:div.container {:style {:margin-bottom 20}}
     [:h1.title.is-1 "Catwalk"]]
-   [:div.dev {:style {:border    "1px solid red"
+   #_[:div.dev {:style {:border    "1px solid red"
                         :font-size "0.8em"}}
       (pr-str @(rf/subscribe [:all]))]
    [:div#input.columns
@@ -301,8 +301,7 @@
      [model-component]]]
    [:div#output
     [:h4.title.is-4 "Output"]
-    [output-component]]]
-  )
+    [output-component]]])
 
 (defn mount []
   (rd/render [app] (.getElementById js/document "app")))
@@ -312,5 +311,4 @@
   (mount))
 
 (defn reload []
-  #_(rf/dispatch-sync [:initialize-db])
   (mount))
