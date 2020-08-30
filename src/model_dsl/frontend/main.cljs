@@ -55,31 +55,30 @@
 
 ;; COMPONENTS
 
-(defn new-row-modal [modal-active?]
-  (let [new-row-name (r/atom nil)]
-    (fn [modal-active?]
-      [:div {:class [:modal (when @modal-active? :is-active)]}
+(defn new-measure-modal [active?]
+  (let [new-measure-name (r/atom nil)]
+    (fn [active?]
+      [:div {:class [:modal (when @active? :is-active)]}
        [:div.modal-background]
        [:div.modal-content
         [:div.box
-         [:h3.title.is_h3 "Enter new model row name"]
+         [:h3.title.is_h3 "Enter new Measure Name"]
          [:form {:on-submit #(do (.preventDefault %)
-                                 (rf/dispatch [:create-new-measure (keywordify-measure-name @new-row-name)])
-                                 (rf/dispatch [:update-selected-measure {:name (keywordify-measure-name @new-row-name)}])
-                                 (reset! modal-active? false)
-                                 (reset! new-row-name nil))}
+                                 (rf/dispatch [:create-new-measure (keywordify-measure-name @new-measure-name)])
+                                 (rf/dispatch [:update-selected-measure {:name (keywordify-measure-name @new-measure-name)}])
+                                 (reset! active? false)
+                                 (reset! new-measure-name nil))}
           [:div.field
-           [:input {:placeholder "Enter new model row name"
-                    :on-change #(reset! new-row-name (-> % .-target .-value))
-                    :value @new-row-name}]]
+           [:input {:placeholder "Enter new measure name"
+                    :on-change #(reset! new-measure-name (-> % .-target .-value))
+                    :value @new-measure-name}]]
           [:button.button.is-primary "save"]]]]
        [:button.modal-close.is-large
-        {:on-click #(do (reset! modal-active? false)
-                        (reset! new-row-name nil))}
-        "x"]])))
+        {:on-click #(do (reset! active? false)
+                        (reset! new-measure-name nil))}]])))
 
 (defn measure-dropdown []
-  (let [s (r/atom {})
+  (let [s (r/atom {:dropdown-active false})
         modal-active? (r/atom false)]
     (fn []
       (let [measures         @(rf/subscribe [:measure-order])
@@ -88,11 +87,9 @@
          #_[:div.dev {:style {:border "1px solid red" :text "0.8em"}} @s]
          [:div.dropdown {:class (when (:dropdown-active @s) :is-active)}
           [:div.dropdown-trigger {:on-click #(swap! s update :dropdown-active not)}
-           [:button.button {:style {:width 300 :justify-content :space-between }
-                            :aria-haspopup "true"
-                            :aria-controls "dropdown-menu"}
+           [:button.button {:style {:width 300 :justify-content :space-between }}
             [:span (:name selected-measure)]
-            [:span.icon.is-small {:aria-hidden true} [:i.fas.fa-angle-down]]]
+            [:span.icon.is-small [:i.fas.fa-angle-down]]]
            [:div#dropdown-menu.dropdown-menu {:role :menu}
             [:div.dropdown-content
              (for [measure measures]
@@ -106,13 +103,11 @@
                          :padding-right "1em"}
                  :draggable true
                  :on-drag-start #(swap! s assoc :drag-item measure)
-                 :on-drag-end (fn [_]
-                                (rf/dispatch [:change-measure-order
-                                              (vec-reorder measures (:drag-over @s) (:drag-item @s))])
-                                (swap! s dissoc :drag-item :drag-over))
-                 :on-drag-over (fn [e]
-                                 (.preventDefault e)
-                                 (swap! s assoc :drag-over measure))
+                 :on-drag-end #(do (rf/dispatch [:change-measure-order
+                                                 (vec-reorder measures (:drag-over @s) (:drag-item @s))])
+                                   (swap! s dissoc :drag-item :drag-over))
+                 :on-drag-over #(do (.preventDefault %)
+                                    (swap! s assoc :drag-over measure))
                  :on-drag-leave #(swap! s assoc :drag-over :nothing)}
                 [:span (name measure)]
                 [:span.icon.is-small
@@ -122,11 +117,10 @@
                                  (.stopPropagation %))}
                  [:i.fas.fa-backspace]]])
              [:a.dropdown-item
-              {:style {:opacity 0.5
-                       :border-top (when (= :nothing (:drag-over @s)) "1px solid blue")}
+              {:style {:opacity 0.5 :border-top (when (= :nothing (:drag-over @s)) "1px solid blue")}
                :on-click #(reset! modal-active? true)}
-              [:p "Add new row"]]]]]]
-         [new-row-modal modal-active?]]))))
+              [:p "Add new measure"]]]]]]
+         [new-measure-modal modal-active?]]))))
 
 
 (defn codemirror-model []
