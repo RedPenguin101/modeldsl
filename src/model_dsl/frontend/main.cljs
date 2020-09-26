@@ -70,7 +70,6 @@
                       (assoc options
                              :value @value-atom))]
           (reset! cm editor)
-          (println @cm)
           (.on editor "change"
                #(do
                   (reset! value-atom (.getValue editor))))))
@@ -78,6 +77,29 @@
       (fn [this old-argv]
         (reset! value-atom @(second (r/argv this)))
         (.setValue @cm @value-atom))})))
+
+(defn codemirror-model [code name]
+  (let [ed (r/atom nil)]
+    (r/create-class
+     {:reagent-render (fn [] [:div])
+
+      :component-did-mount
+      (fn [component]
+        (let [editor (create-codemirror
+                      (rd/dom-node component)
+                      {:mode "clojure"
+                       :matchBrackets true
+                       :autoCloseBrackets true
+                       :value code})]
+          (reset! ed editor)
+          (.on editor "change"
+               #(rf/dispatch [:select-measure {:name name :code (.getValue editor)}]))))
+
+      :component-did-update
+      (fn [this _]
+        (let [new-code (second (r/argv this))]
+          (when (not= new-code (.getValue @ed))
+            (.setValue @ed new-code))))})))
 
 (defn new-measure-modal [active?]
   (let [new-measure-name (r/atom nil)]
@@ -146,11 +168,10 @@
               [:p "Add new measure"]]]]]]
          [new-measure-modal modal-active?]]))))
 
-(defn model-input [_]
-  (let [{:keys [name code]} @(rf/subscribe [:selected-measure])
-        code (r/atom code)]
-    (fn []
-      [:div {:style {:border        (if (valid-edn? @code)
+(defn model-input []
+  (fn []
+    (let [{:keys [name code]} @(rf/subscribe [:selected-measure])]
+      [:div {:style {:border        (if (valid-edn? code)
                                       "1px solid #00d1b2"
                                       "1px solid red")
                      :margin-top    10
@@ -158,20 +179,20 @@
                      :padding       10
                      :box-shadow    (when (not (valid-edn? code))
                                       "0px 0px 5px red")}}
-       [:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str [name @code])]
+       [:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str [name code])]
        [measure-dropdown]
-       [codemirror code {:name name}]
+       [codemirror-model code name]
        [:div.container {:style {:margin-top 10}}
         [:button.button.is-primary
          {:style    {:margin-right 20}
           :on-click (fn [e]
                       (.preventDefault e)
-                      (when (valid-edn? @code)
+                      (when (valid-edn? code)
                         (rf/dispatch [:update-measure
                                       {:name       name
-                                       :code       (keywordize (edn/read-string @code))
-                                       :string-rep @code}])))}
-         (if (valid-edn? @code)
+                                       :code       (keywordize (edn/read-string code))
+                                       :string-rep code}])))}
+         (if (valid-edn? code)
            "Update"
            "Invalid EDN")]]])))
 
@@ -234,10 +255,10 @@
      [profile-window (rf/subscribe [:profile])]]
     [:div#model.column
      [:h4.title.is-4 "Model"]
-     [model-input (rf/subscribe [:selected-measure])]]]
-   #_[:div#output
-      [:h4.title.is-4 "Output"]
-      [output-window]]])
+     [model-input]]]
+   [:div#output
+    [:h4.title.is-4 "Output"]
+    [output-window]]])
 
 (defn mount []
   (rd/render [app] (.getElementById js/document "app")))
