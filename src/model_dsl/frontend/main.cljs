@@ -7,6 +7,8 @@
             [re-frame.core :as rf]
             [goog.i18n.NumberFormat.Format]
             ["codemirror/mode/clojure/clojure"]
+            ["codemirror/addon/edit/closebrackets"]
+            ["codemirror/addon/edit/matchbrackets"]
             [cljsjs.codemirror]
             [model-dsl.frontend.db]
             [model-dsl.frontend.events]
