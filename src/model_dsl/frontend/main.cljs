@@ -7,7 +7,9 @@
             [re-frame.core :as rf]
             [goog.i18n.NumberFormat.Format]
             ["codemirror/mode/clojure/clojure"]
-            ["react-codemirror2" :refer [UnControlled]]
+            ["codemirror/addon/edit/closebrackets"]
+            ["codemirror/addon/edit/matchbrackets"]
+            [cljsjs.codemirror]
             [model-dsl.frontend.db]
             [model-dsl.frontend.events]
             [model-dsl.frontend.table-display :refer [tabulate]]
@@ -53,6 +55,58 @@
 
 ;; COMPONENTS
 
+(defn create-codemirror [elem options]
+  (js/CodeMirror.
+   elem
+   (clj->js options)))
+
+(defn codemirror [value-atom options]
+  (let [options (merge {:mode "clojure"} options)
+        cm (r/atom nil)]
+    (r/create-class
+     {:reagent-render (fn [] [:div {:style {:height 250}}])
+      :component-did-mount
+      (fn [component]
+        (let [editor (create-codemirror
+                      (rd/dom-node component)
+                      (assoc options
+                             :value @value-atom))]
+          (reset! cm editor)
+          (.on editor "change"
+               #(do
+                  (reset! value-atom (.getValue editor))))))
+      :component-did-update
+      (fn [this old-argv]
+        (reset! value-atom @(second (r/argv this)))
+        (.setValue @cm @value-atom))})))
+
+(defn codemirror-model [code name]
+  (let [ed (r/atom nil)
+        name (r/atom name)]
+    (r/create-class
+     {:reagent-render (fn [] [:div])
+
+      :component-did-mount
+      (fn [component]
+        (let [editor (create-codemirror
+                      (rd/dom-node component)
+                      {:mode "clojure"
+                       :matchBrackets true
+                       :autoCloseBrackets true
+                       :value code})]
+          (reset! ed editor)
+          (.on editor "change"
+               #(do
+                  (println name code)
+                  (rf/dispatch [:select-measure {:name @name :code (.getValue editor)}])))))
+
+      :component-did-update
+      (fn [this _]
+        (let [[_ new-code new-name] (r/argv this)]
+          (when (not= new-code (.getValue @ed))
+            (reset! name new-name)
+            (.setValue @ed new-code))))})))
+
 (defn new-measure-modal [active?]
   (let [new-measure-name (r/atom nil)]
     (fn [active?]
@@ -85,7 +139,7 @@
          #_[:div.dev {:style {:border "1px solid red" :text "0.8em"}} @s]
          [:div.dropdown {:class (when (:dropdown-active @s) :is-active)}
           [:div.dropdown-trigger {:on-click #(swap! s update :dropdown-active not)}
-           [:button.button {:style {:width 300 :justify-content :space-between }}
+           [:button.button {:style {:width 300 :justify-content :space-between}}
             [:span (:name selected-measure)]
             [:span.icon.is-small [:i.fas.fa-angle-down]]]
            [:div#dropdown-menu.dropdown-menu {:role :menu}
@@ -120,8 +174,7 @@
               [:p "Add new measure"]]]]]]
          [new-measure-modal modal-active?]]))))
 
-
-(defn codemirror-model []
+(defn model-input []
   (fn []
     (let [{:keys [name code]} @(rf/subscribe [:selected-measure])]
       [:div {:style {:border        (if (valid-edn? code)
@@ -132,29 +185,22 @@
                      :padding       10
                      :box-shadow    (when (not (valid-edn? code))
                                       "0px 0px 5px red")}}
+       #_[:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str [name code])]
        [measure-dropdown]
-       [:> UnControlled
-        {:value     code
-         :options   {:mode "clojure"}
-         :on-change (fn [_ _ v] (rf/dispatch [:select-measure {:name name :code v}]))}]])))
-
-(defn model-window []
-  (let [{:keys [name code]} @(rf/subscribe [:selected-measure])]
-    [:div
-     [codemirror-model]
-     [:div.container {:style {:margin-top 10}}
-      [:button.button.is-primary
-       {:style    {:margin-right 20}
-        :on-click (fn [e]
-                    (.preventDefault e)
-                    (when (valid-edn? code)
-                      (rf/dispatch [:update-measure
-                                    {:name       name
-                                     :code       (keywordize (edn/read-string code))
-                                     :string-rep code}])))}
-       (if (valid-edn? code)
-         "Update"
-         "Invalid EDN")]]]))
+       [codemirror-model code name]
+       [:div.container {:style {:margin-top 10}}
+        [:button.button.is-primary
+         {:style    {:margin-right 20}
+          :on-click (fn [e]
+                      (.preventDefault e)
+                      (when (valid-edn? code)
+                        (rf/dispatch [:update-measure
+                                      {:name       name
+                                       :code       (keywordize (edn/read-string code))
+                                       :string-rep code}])))}
+         (if (valid-edn? code)
+           "Update"
+           "Invalid EDN")]]])))
 
 (defn profile-window [profile-atom]
   (let [profile (r/atom @profile-atom)]
@@ -165,25 +211,21 @@
                       :margin-bottom 10
                       :border-radius 5
                       :padding       10
-                      :height        362
                       :box-shadow    (when (not (valid-edn? @profile)) "0px 0px 5px red")}}
-        [:> UnControlled
-         {:value     @profile
-          :options   {:mode "clojure"}
-          :on-change (fn [_ _ v] (reset! profile v))}]]
-       [:button.button.is-primary
-        {:on-click #(do (.preventDefault %)
-                        (when (valid-edn? @profile)
-                          (rf/dispatch [:update-profile @profile])))}
-        (if (valid-edn? @profile)
-          "Update"
-          "Invalid EDN")]])))
+        [:div {:style {:height 350}} [codemirror profile {}]]
+        [:button.button.is-primary
+         {:on-click #(do (.preventDefault %)
+                         (when (valid-edn? @profile)
+                           (rf/dispatch [:update-profile @profile])))}
+         (if (valid-edn? @profile)
+           "Update"
+           "Invalid EDN")]]])))
 
 (defn output-window []
   (let [profile    (edn/read-string @(rf/subscribe [:profile]))
         measures @(rf/subscribe [:measure-order])
         model (extract-code @(rf/subscribe [:model]))]
-    (if-let [scenario (try-model (for [measure-name measures] 
+    (if-let [scenario (try-model (for [measure-name measures]
                                    [measure-name (measure-name model)])
                                  profile
                                  10)]
@@ -192,7 +234,7 @@
          [:table.table.is-narrow.is-striped.is-hoverable
           [:thead
            [:tr {:style {:white-space :nowrap}}
-            (for [h (first data)] 
+            (for [h (first data)]
               [:th h])]]
           [:tbody
            (for [row (rest data)]
@@ -218,7 +260,7 @@
      [profile-window (rf/subscribe [:profile])]]
     [:div#model.column
      [:h4.title.is-4 "Model"]
-     [model-window]]]
+     [model-input]]]
    [:div#output
     [:h4.title.is-4 "Output"]
     [output-window]]])

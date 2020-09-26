@@ -4,7 +4,8 @@
 
  :dependencies
  [[reagent "1.0.0-alpha2"]
-  [re-frame "1.0.0"]]
+  [re-frame "1.0.0"]
+  [cljsjs/codemirror "5.44.0-1"]]
 
  :dev-http {9090 "public/"}
 

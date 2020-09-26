@@ -16,14 +16,24 @@
 * DONE change tabulate to take row-order from app-db
 * DONE dropdown should be fixed width
 * DONE delete buttons should be far right
+* DONE fix codemirror it actually works
+
 * output is more descriptive about validity
   * recognizes undefined functions
+  * recognizes circular dependency
+* doesn't fail on a vector being returned from profile-lookup
 * date capability
-* export model to xlsx
-* Export scenario to xlsx
 * Override window
-* Codemirror: no skipping to end of output on type
-* Historical data interface
 * Saving and loading scenarios
 * change number of periods to model
 * indicate unsaved profile / model
+* Controls
+  * clear all
+  * new model
+  * save model
+  * load model
+  * load profile
+  * save profile
+* export model to xlsx
+* Export scenario to xlsx
+* Historical data interface
