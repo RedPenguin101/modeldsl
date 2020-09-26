@@ -16,6 +16,7 @@
 * DONE change tabulate to take row-order from app-db
 * DONE dropdown should be fixed width
 * DONE delete buttons should be far right
+* fix codemirror it actually works
 * output is more descriptive about validity
   * recognizes undefined functions
 * date capability
