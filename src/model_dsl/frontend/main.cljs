@@ -62,7 +62,7 @@
   (let [options (merge {:mode "clojure"} options)
         cm (r/atom nil)]
     (r/create-class
-     {:reagent-render (fn [] [:div])
+     {:reagent-render (fn [] [:div {:style {:height 250}}])
       :component-did-mount
       (fn [component]
         (let [editor (create-codemirror
@@ -183,7 +183,7 @@
                      :padding       10
                      :box-shadow    (when (not (valid-edn? code))
                                       "0px 0px 5px red")}}
-       [:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str [name code])]
+       #_[:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str [name code])]
        [measure-dropdown]
        [codemirror-model code name]
        [:div.container {:style {:margin-top 10}}
@@ -209,16 +209,15 @@
                       :margin-bottom 10
                       :border-radius 5
                       :padding       10
-                      :height        362
                       :box-shadow    (when (not (valid-edn? @profile)) "0px 0px 5px red")}}
-        [codemirror profile {}]]
-       [:button.button.is-primary
-        {:on-click #(do (.preventDefault %)
-                        (when (valid-edn? @profile)
-                          (rf/dispatch [:update-profile @profile])))}
-        (if (valid-edn? @profile)
-          "Update"
-          "Invalid EDN")]])))
+        [:div {:style {:height 350}} [codemirror profile {}]]
+        [:button.button.is-primary
+         {:on-click #(do (.preventDefault %)
+                         (when (valid-edn? @profile)
+                           (rf/dispatch [:update-profile @profile])))}
+         (if (valid-edn? @profile)
+           "Update"
+           "Invalid EDN")]]])))
 
 (defn output-window []
   (let [profile    (edn/read-string @(rf/subscribe [:profile]))
@@ -252,7 +251,7 @@
   [:div.container
    [:div.container {:style {:margin-bottom 20}}
     [:h1.title.is-1 "Catwalk"]]
-   [:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
+   #_[:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
    [:div#input.columns
     [:div#profile.column
      [:h4.title.is-4 "Profile"]
