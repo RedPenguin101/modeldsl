@@ -79,7 +79,8 @@
         (.setValue @cm @value-atom))})))
 
 (defn codemirror-model [code name]
-  (let [ed (r/atom nil)]
+  (let [ed (r/atom nil)
+        name (r/atom name)]
     (r/create-class
      {:reagent-render (fn [] [:div])
 
@@ -93,12 +94,15 @@
                        :value code})]
           (reset! ed editor)
           (.on editor "change"
-               #(rf/dispatch [:select-measure {:name name :code (.getValue editor)}]))))
+               #(do
+                  (println name code)
+                  (rf/dispatch [:select-measure {:name @name :code (.getValue editor)}])))))
 
       :component-did-update
       (fn [this _]
-        (let [new-code (second (r/argv this))]
+        (let [[_ new-code new-name] (r/argv this)]
           (when (not= new-code (.getValue @ed))
+            (reset! name new-name)
             (.setValue @ed new-code))))})))
 
 (defn new-measure-modal [active?]
