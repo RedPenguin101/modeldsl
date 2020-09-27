@@ -88,12 +88,12 @@ And result of applying the model to the profile would be:
 
 | period-number         | 1   | 2    | 3      | 4      | 5 |
 |-----------------------|-----|------|--------|--------|---|
-| market-value          | 100 | 102  | 104.04 | 106.12 | 0 |
-| earnings              | 10  | 10.2 | 10.4   | 10.61  | 0 |
-| dividend              | 4   | 4.08 | 4.16   | 4.24   | 0 |
-| sale-proceeds         | 0   | 0    | 0      | 106.12 | 0 |
-| value-carried-forward | 100 | 102  | 104.04 | 0      | 0 |
-| cumulative-cash       | 4   | 8.08 | 12.24  | 112.6  | 112.6 |
+| market-value          | 100 | 102  | 104 | 106 | 0 |
+| earnings              | 10  | 10 | 10   | 11  | 0 |
+| dividend              | 4   | 4 | 4   | 4   | 0 |
+| sale-proceeds         | 0   | 0    | 0      | 106 | 0 |
+| value-carried-forward | 100 | 102  | 104 | 0      | 0 |
+| cumulative-cash       | 4   | 8 | 12  | 123  | 123 |
 
 
 The benefits of this over doing this in Excel is firstly that you are defining your model explicitly with reference to other model elements. Typically in Excel your model would be defined as Excel formula. For example a measure for period 4 might be `AA4*Control!C45`. Clearly it's impossible to tell what this actually represents. Is it right? You can't tell without looking up the logic behind it. 
