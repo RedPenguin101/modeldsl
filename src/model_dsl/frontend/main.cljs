@@ -26,9 +26,9 @@
 (defn- keywordize [form]
   (postwalk #(if (symbol? %) (keyword %) %) form))
 
-(defn- extract-code [model]
+(defn- extract-model-rows [model]
   (reduce (fn [A [name value]]
-            (assoc A name (:code value)))
+            (assoc A name (cons name (:code value))))
           {}
           model))
 
@@ -49,8 +49,8 @@
         [head tail] (split-with #(not= % before) xs)]
     (concat head [item] tail)))
 
-(defn- try-model [model profile periods]
-  (try (run-model model profile periods)
+(defn- try-model [model-rows profile periods]
+  (try (run-model model-rows profile periods)
        (catch js/Object e false)))
 
 ;; COMPONENTS
@@ -196,7 +196,7 @@
                       (when (valid-edn? code)
                         (rf/dispatch [:update-measure
                                       {:name       name
-                                       :code       (keywordize (edn/read-string code))
+                                       :code       (keywordize (edn/read-string (str "[" code "]")))
                                        :string-rep code}])))}
          (if (valid-edn? code)
            "Update"
@@ -224,9 +224,8 @@
 (defn output-window []
   (let [profile    (edn/read-string @(rf/subscribe [:profile]))
         measures @(rf/subscribe [:measure-order])
-        model (extract-code @(rf/subscribe [:model]))]
-    (if-let [scenario (try-model (for [measure-name measures]
-                                   [measure-name (measure-name model)])
+        model-rows (extract-model-rows @(rf/subscribe [:model]))]
+    (if-let [scenario (try-model (map model-rows measures)
                                  profile
                                  10)]
       (let [data (tabulate measures scenario)]

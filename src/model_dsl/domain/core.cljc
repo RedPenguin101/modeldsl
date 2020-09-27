@@ -48,7 +48,7 @@
       (cond
         (= (count function) 1)            (interpret operator options)
         (put-ins operator)                (apply (operator replacements) options
-                                                (map #(interpret % options) operands))
+                                                 (map #(interpret % options) operands))
         (contains? replacements operator) (apply (operator replacements) (map #(interpret % options) operands))
         :else                             (throw (ex-info "FAIL" [operator operands]))))
     function))
@@ -92,8 +92,7 @@
                             (:this :starting-aum)
                             (:this :pnl)
                             (:this :distribution))]])
-  (def demo-model2 [[:period-number [:increment [:previous :period-number]] {:initial-value 1}]
-                    ])
+  (def demo-model2 [[:period-number [:increment [:previous :period-number]] {:initial-value 1}]])
 
   (def demo-profile {:commitments   100
                      :contributions [0.25 0.25 0.25 0.25]
