@@ -1,5 +1,7 @@
 (ns model-dsl.domain.core)
 
+;; DSL functions
+
 (defn previous [{previous-periods :previous-periods} key]
   (when (not-empty previous-periods)
     (key (last previous-periods))))
@@ -23,10 +25,10 @@
 (defn accumulated [{:keys [new-period previous-periods]} key]
   (reduce + (map key (conj previous-periods new-period))))
 
+;; put-ins are used where a DSL function requires additional options
+;; (e.g. the previous periods of the scenario) to properly operate
 (def put-ins #{:previous :this :profile-lookup :profile-period-lookup :if
                :accumulated})
-
-(def other-functions #{:product :increment :sum})
 
 (declare model-if)
 
@@ -40,7 +42,11 @@
    :product               *
    :increment             inc
    :sum                   +
-   :nth                   nth})
+   :nth                   nth
+   :equal                 =
+   :negate                #(- %)})
+
+;; Interpreter
 
 (defn- interpret [function options]
   (if (coll? function)

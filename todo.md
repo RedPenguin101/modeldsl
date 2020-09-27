@@ -18,7 +18,9 @@
 * DONE delete buttons should be far right
 * DONE fix codemirror it actually works
 
-* make sure 'initial value' is working
+* DONE make sure 'initial value' is working
+* DONE implement equal function
+* DONE implement negate function
 * output is more descriptive about validity
   * recognizes undefined functions
   * recognizes circular dependency
