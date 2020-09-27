@@ -250,16 +250,15 @@
 
 (defn app []
   [:div.container
-   [:div.container {:style {:margin-bottom 20}}
-    [:h1.title.is-1 "Catwalk"]]
    #_[:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
-   [:div#input.columns
-    [:div#profile.column
-     [:h4.title.is-4 "Profile"]
-     [profile-window (rf/subscribe [:profile])]]
-    [:div#model.column
-     [:h4.title.is-4 "Model"]
-     [model-input]]]
+   [:section.section
+    [:div#input.columns
+     [:div#profile.column
+      [:h4.title.is-4 "Profile"]
+      [profile-window (rf/subscribe [:profile])]]
+     [:div#model.column
+      [:h4.title.is-4 "Model"]
+      [model-input]]]]
    [:div#output
     [:h4.title.is-4 "Output"]
     [output-window]]])
