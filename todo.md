@@ -18,11 +18,14 @@
 * DONE delete buttons should be far right
 * DONE fix codemirror it actually works
 
+* make sure 'initial value' is working
 * output is more descriptive about validity
   * recognizes undefined functions
   * recognizes circular dependency
 * doesn't fail on a vector being returned from profile-lookup
 * date capability
+* Implement Entity
+* Implement Instance
 * Override window
 * Saving and loading scenarios
 * change number of periods to model
@@ -37,3 +40,5 @@
 * export model to xlsx
 * Export scenario to xlsx
 * Historical data interface
+* implement model as a tree, not a list
+* Implement sub model

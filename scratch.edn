@@ -1,0 +1,25 @@
+;; Entity
+{:id :xyz
+ :name "Bravo"
+ :description "A Spanish real estate development"
+ :instances [:Instance]}
+
+;; Instance
+{:id :def
+ :name "Primary"
+ :creation-date "2020-09-29"
+ :profile :Profile
+ :model :Model
+ :cases [:Case]
+ :analytics [:Analytics]
+ :succeeds :abc}
+
+;; Historical Period
+{:entity :xyz
+ :instance :abc
+ :periods [{:period-number 1
+            :rent 100
+            :expenses -50}
+           {:period-number 2
+            :rent 120
+            :expenses -60}]}
