@@ -29,7 +29,7 @@
   * DONE load-entity event which loads the entity from disk
   * DONE have available entities in app-state (name->id pairs)
   * DONE lookup available entities on startup, maybe from a separate edn file
-* Yellow glow on state change
+* DONE Yellow glow on unsaved state change
 * New Entity
 * output is more descriptive about validity
   * recognizes undefined functions

@@ -76,7 +76,8 @@
     [:div.navbar-end
      [:div.navbar-item
       [:div.buttons
-       [:a.button.is-link {:on-click #(rf/dispatch [:save-entity @(rf/subscribe [:loaded-entity])])}
+       [:a.button {:class (if (some true? (vals @(rf/subscribe [:state-changes]))) :is-link :is-light)
+                   :on-click #(rf/dispatch [:save-entity @(rf/subscribe [:loaded-entity])])}
         [:strong "Save"]]]]]]])
 
 (defn create-codemirror [elem options]
@@ -101,7 +102,6 @@
           (reset! ed editor)
           (.on editor "change"
                #(do
-                  (println name code)
                   (rf/dispatch [:select-measure {:name @name :code (.getValue editor)}])))))
 
       :component-did-update
@@ -128,8 +128,8 @@
           (reset! ed editor)
           (.on editor "change"
                #(do
-                  (println name profile)
-                  (rf/dispatch [:update-profile (.getValue editor)])))))
+                  (rf/dispatch [:update-profile (.getValue editor)])
+                  (rf/dispatch [:flag-profile-state-change (.getValue editor)])))))
 
       :component-did-update
       (fn [this _]
@@ -214,8 +214,9 @@
                      :margin-top    10
                      :border-radius 5
                      :padding       10
-                     :box-shadow    (when (not (valid-edn? code))
-                                      "0px 0px 5px red")}}
+                     :box-shadow    (cond (not (valid-edn? code)) "0px 0px 5px red"
+                                          (:model-state-changed @(rf/subscribe [:state-changes])) "0px 0px 5px GoldenRod"
+                                          )}}
        #_[:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str [name code])]
        [measure-dropdown]
        [codemirror-model code name]
@@ -242,7 +243,8 @@
                       :margin-bottom 10
                       :border-radius 5
                       :padding       10
-                      :box-shadow    (when (not (valid-edn? profile)) "0px 0px 5px red")}}
+                      :box-shadow    (cond (not (valid-edn? profile)) "0px 0px 5px red"
+                                           (:profile-state-changed @(rf/subscribe [:state-changes])) "0px 0px 5px GoldenRod")}}
         [:div {:style {:height 390}} [codemirror-profile profile :dummy]]]])))
 
 (defn output-window []
@@ -276,7 +278,7 @@
 (defn app []
   [:div.container
    [navbar]
-   #_[:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
+   [:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
    [:section.section
     [:div#input.columns
      [:div#profile.column
@@ -298,3 +300,4 @@
 
 (defn reload []
   (mount))
+

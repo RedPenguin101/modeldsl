@@ -29,7 +29,8 @@
 (rf/reg-event-db
  :update-measure
  (fn [db [_ {:keys [name code string-rep]}]]
-   (assoc-in db [:model name] {:code code :string-rep string-rep})))
+   (assoc (assoc-in db [:model name] {:code code :string-rep string-rep})
+          :model-state-changed true)))
 
 (rf/reg-event-db
  :remove-measure
@@ -40,12 +41,20 @@
  :change-measure-order
  (fn [db [_ new-order]]
    (println "change-measure-order fired with" new-order)
-   (assoc db :measure-order (vec new-order))))
+   (assoc db 
+          :measure-order (vec new-order)
+          :model-state-changed true)))
 
 (rf/reg-event-db
  :update-profile
  (fn [db [_ profile]]
+   (println "update-profile fired with" profile)
    (assoc db :profile profile)))
+
+(rf/reg-event-db
+ :flag-profile-state-change
+ (fn [db [_ _]]
+   (assoc db :profile-state-changed true)))
 
 (rf/reg-event-db
  :set-current-entity
@@ -56,17 +65,21 @@
  :load-entity
  (fn [db [_ id]]
    (let [{:keys [profile model measure-order selected-measure]} (backend/get-state id)]
-     (-> db
-         (assoc :profile profile)
-         (assoc :model model)
-         (assoc :measure-order measure-order)
-         (assoc :selected-measure selected-measure)))))
+     (assoc db
+            :profile profile
+            :model model
+            :measure-order measure-order
+            :selected-measure selected-measure
+            :model-state-changed false
+            :profile-state-changed false))))
 
 (rf/reg-event-db
  :save-entity
  (fn [db [_ id]]
    (backend/update-state id (select-keys db [:profile :model :measure-order :selected-measure]))
-   db))
+   (assoc db 
+          :model-state-changed false
+          :profile-state-changed false)))
 
 ;; SUBS
 
@@ -101,3 +114,9 @@
  :loaded-entity
  (fn [db _]
    (get-in db [:available-entities :current-active])))
+
+(rf/reg-sub
+ :state-changes
+ (fn [db _]
+   (println (select-keys db [:model-state-changed :profile-state-changed]))
+   (select-keys db [:model-state-changed :profile-state-changed])))
