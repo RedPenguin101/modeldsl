@@ -24,7 +24,7 @@
 * DONE Top bar
 * Implement Entity and persistence
   * DONE Top bar where you can select entity from a dropdown
-  * Change App state to have one Entity at a time
+  * DONE change App state to have one Entity at a time
   * save-entity event which dumps the app-state to disk (maybe fired on update?)
   * load-entity event which loads the entity from disk
   * have available entities in app-state (name->id pairs)

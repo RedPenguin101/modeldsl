@@ -1,5 +1,6 @@
 (ns model-dsl.frontend.events
-  (:require [re-frame.core :as rf]))
+  (:require [re-frame.core :as rf]
+            [model-dsl.frontend.dummy-backend :as backend]))
 
 ;; EVENTS
 
@@ -43,6 +44,22 @@
  (fn [db [_ id]]
    (assoc-in db [:available-entities :current-active] id)))
 
+(rf/reg-event-db
+ :load-entity
+ (fn [db [_ id]]
+   (let [{:keys [profile model measure-order selected-measure]} (backend/get-state id)]
+     (-> db
+         (assoc :profile profile)
+         (assoc :model model)
+         (assoc :measure-order measure-order)
+         (assoc :selected-measure selected-measure)))))
+
+(rf/reg-event-db
+ :save-entity
+ (fn [db [_ id]]
+   (backend/update-state id (select-keys db [:profile :model :measure-order :selected-measure]))
+   db))
+
 ;; SUBS
 
 (rf/reg-sub :all (fn [db _] db))
@@ -71,3 +88,8 @@
  :available-entities
  (fn [db _]
    (:available-entities db)))
+
+(rf/reg-sub
+ :loaded-entity
+ (fn [db _]
+   (get-in db [:available-entities :current-active])))

@@ -63,7 +63,8 @@
        [:a.navbar-link "Entity"]
        [:div.navbar-dropdown
         (for [[id name] (dissoc entities :current-active)]
-          [:a.navbar-item  {:on-click #(rf/dispatch [:set-current-entity id])
+          [:a.navbar-item  {:on-click #(do (rf/dispatch [:set-current-entity id])
+                                           (rf/dispatch [:load-entity id]))
                             :style {:font-weight (when (= id (:current-active entities)) :bold)}}
            name])]])))
 
@@ -74,7 +75,9 @@
      [entity-selector-dropdown]]
     [:div.navbar-end
      [:div.navbar-item
-      [:div.buttons]]]]])
+      [:div.buttons
+       [:a.button.is-link {:on-click #(rf/dispatch [:save-entity @(rf/subscribe [:loaded-entity])])}
+        [:strong "Save"]]]]]]])
 
 (defn create-codemirror [elem options]
   (js/CodeMirror.
@@ -272,7 +275,7 @@
 (defn app []
   [:div.container
    [navbar]
-   #_[:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
+   [:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
    [:section.section
     [:div#input.columns
      [:div#profile.column
