@@ -38,6 +38,11 @@
  (fn [db [_ profile]]
    (assoc db :profile profile)))
 
+(rf/reg-event-db
+ :set-current-entity
+ (fn [db [_ id]]
+   (assoc-in db [:available-entities :current-active] id)))
+
 ;; SUBS
 
 (rf/reg-sub :all (fn [db _] db))
@@ -61,3 +66,8 @@
  :profile
  (fn [db _]
    (:profile db)))
+
+(rf/reg-sub
+ :available-entities
+ (fn [db _]
+   (:available-entities db)))

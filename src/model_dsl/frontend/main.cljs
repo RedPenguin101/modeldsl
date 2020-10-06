@@ -54,6 +54,27 @@
        (catch js/Object e false)))
 
 ;; COMPONENTS
+ 
+(defn entity-selector-dropdown []
+  (fn []
+    (let [entities @(rf/subscribe [:available-entities])]
+      [:div.navbar-item.has-dropdown.is-hoverable
+       #_[:div.dropdown-trigger {:on-click #(swap! active not)}]
+       [:a.navbar-link "Entity"]
+       [:div.navbar-dropdown
+        (for [[id name] (dissoc entities :current-active)]
+          [:a.navbar-item  {:on-click #(rf/dispatch [:set-current-entity id])
+                            :style {:font-weight (when (= id (:current-active entities)) :bold)}}
+           name])]])))
+
+(defn navbar []
+  [:navbar {:role "navigation" :aria-label "main navigation"}
+   [:div#catwalk-navbar.navbar-menu
+    [:div.navbar-start
+     [entity-selector-dropdown]]
+    [:div.navbar-end
+     [:div.navbar-item
+      [:div.buttons]]]]])
 
 (defn create-codemirror [elem options]
   (js/CodeMirror.
@@ -250,16 +271,8 @@
 
 (defn app []
   [:div.container
+   [navbar]
    #_[:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
-   [:navbar {:role "navigation" :aria-label "main navigation"}
-    [:div#catwalk-navbar.navbar-menu
-     [:div.navbar-start
-      [:a.navbar-item "Home"]
-      [:a.navbar-item "Second Thing"]]
-     [:div.navbar-end
-      [:div.navbar-item
-       [:div.buttons
-        [:a.button.is-primary [:strong "Log in"]]]]]]]
    [:section.section
     [:div#input.columns
      [:div#profile.column

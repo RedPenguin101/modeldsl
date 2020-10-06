@@ -21,9 +21,9 @@
 * DONE implement equal function
 * DONE implement negate function
 
-* Top bar
+* DONE Top bar
 * Implement Entity and persistence
-  * Top bar where you can select entity from a dropdown
+  * DONE Top bar where you can select entity from a dropdown
   * Change App state to have one Entity at a time
   * save-entity event which dumps the app-state to disk (maybe fired on update?)
   * load-entity event which loads the entity from disk
