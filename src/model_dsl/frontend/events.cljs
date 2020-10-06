@@ -5,6 +5,14 @@
 ;; EVENTS
 
 (rf/reg-event-db
+ :initialize-db
+ (fn [_ _]
+   (let [entities (backend/get-saved-entities)]
+     (println {:available-entities (backend/get-saved-entities)})
+     (merge {:available-entities entities}
+            (backend/get-state (:current-active entities))))))
+
+(rf/reg-event-db
  :select-measure
  (fn [db [_ {:keys [name code]}]]
    (let [code (or code (get-in db [:model name :string-rep]))]

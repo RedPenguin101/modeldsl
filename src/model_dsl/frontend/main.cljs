@@ -276,7 +276,7 @@
 (defn app []
   [:div.container
    [navbar]
-   [:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
+   #_[:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
    [:section.section
     [:div#input.columns
      [:div#profile.column

@@ -22,13 +22,15 @@
 * DONE implement negate function
 
 * DONE Top bar
-* Implement Entity and persistence
+* DONE Implement Entity and persistence
   * DONE Top bar where you can select entity from a dropdown
   * DONE change App state to have one Entity at a time
-  * save-entity event which dumps the app-state to disk (maybe fired on update?)
-  * load-entity event which loads the entity from disk
-  * have available entities in app-state (name->id pairs)
-  * lookup available entities on startup, maybe from a separate edn file
+  * DONE save-entity event which dumps the app-state to disk (maybe fired on update?)
+  * DONE load-entity event which loads the entity from disk
+  * DONE have available entities in app-state (name->id pairs)
+  * DONE lookup available entities on startup, maybe from a separate edn file
+* Yellow glow on state change
+* New Entity
 * output is more descriptive about validity
   * recognizes undefined functions
   * recognizes circular dependency

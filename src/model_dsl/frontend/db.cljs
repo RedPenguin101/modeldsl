@@ -24,7 +24,3 @@
    :selected-measure {:name          :period-number
                       :code          "(increment (previous period-number))\n"}})
 
-(rf/reg-event-db
- :initialize-db
- (fn [_ _]
-   initial-db))
