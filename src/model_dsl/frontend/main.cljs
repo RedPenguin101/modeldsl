@@ -84,26 +84,6 @@
    elem
    (clj->js options)))
 
-(defn codemirror [value-atom options]
-  (let [options (merge {:mode "clojure"} options)
-        cm (r/atom nil)]
-    (r/create-class
-     {:reagent-render (fn [] [:div {:style {:height 250}}])
-      :component-did-mount
-      (fn [component]
-        (let [editor (create-codemirror
-                      (rd/dom-node component)
-                      (assoc options
-                             :value @value-atom))]
-          (reset! cm editor)
-          (.on editor "change"
-               #(do
-                  (reset! value-atom (.getValue editor))))))
-      :component-did-update
-      (fn [this old-argv]
-        (reset! value-atom @(second (r/argv this)))
-        (.setValue @cm @value-atom))})))
-
 (defn codemirror-model [code name]
   (let [ed (r/atom nil)
         name (r/atom name)]
@@ -130,6 +110,33 @@
           (when (not= new-code (.getValue @ed))
             (reset! name new-name)
             (.setValue @ed new-code))))})))
+
+(defn codemirror-profile [profile name]
+  (let [ed (r/atom nil)
+        name (r/atom name)]
+    (r/create-class
+     {:reagent-render (fn [] [:div])
+
+      :component-did-mount
+      (fn [component]
+        (let [editor (create-codemirror
+                      (rd/dom-node component)
+                      {:mode "clojure"
+                       :matchBrackets true
+                       :autoCloseBrackets true
+                       :value profile})]
+          (reset! ed editor)
+          (.on editor "change"
+               #(do
+                  (println name profile)
+                  (rf/dispatch [:update-profile (.getValue editor)])))))
+
+      :component-did-update
+      (fn [this _]
+        (let [[_ new-profile new-name] (r/argv this)]
+          (when (not= new-profile (.getValue @ed))
+            (reset! name new-name)
+            (.setValue @ed new-profile))))})))
 
 (defn new-measure-modal [active?]
   (let [new-measure-name (r/atom nil)]
@@ -226,27 +233,21 @@
            "Update"
            "Invalid EDN")]]])))
 
-(defn profile-window [profile-atom]
-  (let [profile (r/atom @profile-atom)]
-    (fn []
+(defn profile-window []
+  (fn []
+    (let [profile @(rf/subscribe [:profile])]
       [:div
-       [:div {:style {:border        (if (valid-edn? @profile) "1px solid #00d1b2" "1px solid red")
+       [:div {:style {:border        (if (valid-edn? profile) "1px solid #00d1b2" "1px solid red")
                       :margin-top    10
                       :margin-bottom 10
                       :border-radius 5
                       :padding       10
-                      :box-shadow    (when (not (valid-edn? @profile)) "0px 0px 5px red")}}
-        [:div {:style {:height 350}} [codemirror profile {}]]
-        [:button.button.is-primary
-         {:on-click #(do (.preventDefault %)
-                         (when (valid-edn? @profile)
-                           (rf/dispatch [:update-profile @profile])))}
-         (if (valid-edn? @profile)
-           "Update"
-           "Invalid EDN")]]])))
+                      :box-shadow    (when (not (valid-edn? profile)) "0px 0px 5px red")}}
+        [:div {:style {:height 390}} [codemirror-profile profile :dummy]]]])))
 
 (defn output-window []
-  (let [profile    (edn/read-string @(rf/subscribe [:profile]))
+  (let [profile    @(rf/subscribe [:profile])
+        profile  (if (valid-edn? profile) (edn/read-string profile) {})
         measures @(rf/subscribe [:measure-order])
         model-rows (extract-model-rows @(rf/subscribe [:model]))]
     (if-let [scenario (try-model (map model-rows measures)
@@ -280,7 +281,7 @@
     [:div#input.columns
      [:div#profile.column
       [:h4.title.is-4 "Profile"]
-      [profile-window (rf/subscribe [:profile])]]
+      [profile-window]]
      [:div#model.column
       [:h4.title.is-4 "Model"]
       [model-input]]]]

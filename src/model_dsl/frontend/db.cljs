@@ -4,7 +4,7 @@
 (def initial-db
   {:available-entities {:current-active :abc :abc "Bravo" :def "Delta"}
    :profile
-   "{:model-name \"Fund 5\", \n :commitments 1000000, \n :contributions [0 0.25 0.25 0.25 0.25]\n :hello \"world\"\n :happiness 123}"
+   "{:model-name \"Bravo\", \n :commitments 1000000, \n :contributions [0 0.25 0.25 0.25 0.25]\n :hello \"world\"\n :happiness 123}"
    :model
    {:period-number
     {:code       '[(:increment (:previous :period-number))]
