@@ -251,6 +251,15 @@
 (defn app []
   [:div.container
    #_[:div.dev {:style {:border    "1px solid red" :font-size "0.8em"}} (pr-str @(rf/subscribe [:all]))]
+   [:navbar {:role "navigation" :aria-label "main navigation"}
+    [:div#catwalk-navbar.navbar-menu
+     [:div.navbar-start
+      [:a.navbar-item "Home"]
+      [:a.navbar-item "Second Thing"]]
+     [:div.navbar-end
+      [:div.navbar-item
+       [:div.buttons
+        [:a.button.is-primary [:strong "Log in"]]]]]]]
    [:section.section
     [:div#input.columns
      [:div#profile.column

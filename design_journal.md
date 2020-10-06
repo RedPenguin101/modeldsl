@@ -129,6 +129,7 @@ Models are independent of Entities, though there is the expectation that if a Mo
 A typical user pattern might look like this:
 
 ### Initial Creation and Purchase of Investment
+
 1. An investment firm is thinking about buying a Spanish real estate development they refer to as Bravo.
 2. The user, an Investment Analyst, loads up Catwalk
 3. They create the Bravo entity
@@ -140,6 +141,7 @@ A typical user pattern might look like this:
 9. They can use the analytics from the various cases of the Instance, or just export the difference Scenarios, to create proposal which is taken to an Investment Committee. For arguments sake, lets say this happens, the investment is approved, and the RE development is purchased on 2020-09-30.
 
 ### 3 Months in
+
 1. 3 Months after the investment is made (after December 2020, say), the first reporting package from Bravo is received, containing historical time series data. Ideally it will be in a format that matches the Model being used by the investment firm.
 2. If not it will have to be conformed, but either way the historical periods get made available to Catwalk through an API, wth a common ID for the Entity and Model so Catwalk knows that it relates to the Bravo Entity using the European Real Estate Model.
 3. The Analyst loads up Catwalk and navigates to the Primary Instance of the Bravo Entity.
@@ -148,7 +150,8 @@ A typical user pattern might look like this:
 6. After some thinking and analysis, she decides that she needs to change some things about the model to best reflect her estimate of what the future will look like going forward.
 7. She Versions the Instance (creating 'Primary_2021-01-28'), and modifies the Profile and ModelDefinitions to reflect her new theories about the future. She can also tweak the Case variants if needed. The Model itself though, in terms of what ModelRows it contains, must remain the same.
 8. At this point the Analyst can compare a lot of things about the Scenario/Analytics:
-  a. what actually happened in the first period compared to what we thought would happen in the first period as-at underwrite
+
+ a. what actually happened in the first period compared to what we thought would happen in the first period as-at underwrite
   b. what actually happened in the first period compared to our revised Instance says would happen in the first period (which one would expect to show less of a difference)
   c. what we expected to happen in future periods under the conditions of our initial Instance before we had any historical information vs. what we expect to happen under the conditions of our initial Instance given the historical information we have
   d. given the historical information, what we expect to happen in future periods under the initial Instance vs. what we expect to happen under the revised Instance.
